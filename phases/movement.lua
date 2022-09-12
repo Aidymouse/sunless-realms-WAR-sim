@@ -15,6 +15,12 @@ function phase_movement.update(dt)
 
 end
 
+function deselectUnit()
+    STATE.MOVEMENT.currentlySelectedUnit = nil
+    STATE.MOVEMENT.validMoveTiles = {}
+
+end
+
 function phase_movement.mousepressed(x, y, button)
 
     if STATE.MOVEMENT.currentlySelectedUnit == nil then
@@ -24,12 +30,10 @@ function phase_movement.mousepressed(x, y, button)
         if clickedTile == nil then return end
         if clickedTile.occupant == nil then return end
 
-        print(STATE.MOVEMENT.actingPlayer)
+        local actingPlayer = PLAYERS[STATE.MOVEMENT.actingPlayerIndex]
 
-        if clickedTile.occupant.controller ~= STATE.MOVEMENT.actingPlayer then return end
+        if clickedTile.occupant.controller ~= actingPlayer then return end
         if clickedTile.occupant.movement.movesLeft <= 0 then return end
-
-        -- TODO: Check if we're allowed to control this unit
 
         STATE.MOVEMENT.currentlySelectedUnit = clickedTile.occupant
 
@@ -47,7 +51,11 @@ function phase_movement.mousepressed(x, y, button)
     elseif STATE.MOVEMENT.currentlySelectedUnit then
 
         local clickedTile = Hexfield.getTileFromWorldCoords(love.mouse.custom_getXYWithOffset())
-        if clickedTile == nil then return end
+        if clickedTile == nil then 
+            deselectUnit()
+            return
+        end
+
 
         for _, tile in ipairs(STATE.MOVEMENT.validMoveTiles) do
             if tostring(clickedTile.coords) == tostring(tile.coords) then -- We have clicked on a valid tile
@@ -57,18 +65,23 @@ function phase_movement.mousepressed(x, y, button)
                 
                 -- Change unit tile
                 STATE.MOVEMENT.currentlySelectedUnit.occupiedTileCoords = clickedTile.coords
+
+                -- Deduct movement point
                 STATE.MOVEMENT.currentlySelectedUnit.movement.movesLeft = STATE.MOVEMENT.currentlySelectedUnit.movement.movesLeft - 1
 
                 -- Register occupant of unit tile
                 Hexfield.tiles[tostring( clickedTile.coords )].occupant = STATE.MOVEMENT.currentlySelectedUnit
                 
                 -- Reset state
-                STATE.MOVEMENT.currentlySelectedUnit = nil
-                STATE.MOVEMENT.validMoveTiles = {}
-
+                deselectUnit()
                 break
+
             end
         end
+
+        deselectUnit()
+
+
 
 
 
@@ -96,6 +109,10 @@ function phase_movement.draw()
 
     end
 
+    love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print("Acting: "..PLAYERS[STATE.MOVEMENT.actingPlayerIndex].name, 0, 16)
+    love.graphics.translate(CAMERA.offsetX, CAMERA.offsetY)
 
 end
 

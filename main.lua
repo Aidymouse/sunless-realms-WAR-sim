@@ -45,7 +45,7 @@ STATE = {
         currentlySelectedUnit = nil,
         validMoveTiles = {},
         playersWhoHaveMoved = {},
-        actingPlayer = nil
+        actingPlayerIndex = 2
 
     },
 
@@ -93,7 +93,6 @@ function changePhase(newPhase)
         -- Refresh all units
         for _, player in ipairs(PLAYERS) do
 
-
             for _, unit in ipairs(player.units) do
                 unit:movement_refreshMovement()
             end
@@ -103,8 +102,9 @@ function changePhase(newPhase)
 
         STATE.MOVEMENT.playersWhoHaveMoved = {}
         STATE.MOVEMENT.validMoveTiles = {}
-        STATE.MOVEMENT.actingPlayer = PLAYERS[1]
+        STATE.MOVEMENT.actingPlayer = PLAYERS[1] -- TODO: Base first player on tactical advantage
 
+        STATE.activeGui = gui_movement
         STATE.currentPhase = game_phases.MOVEMENT
 
     elseif newPhase == game_phases.TACTICS then
@@ -117,8 +117,13 @@ function changePhase(newPhase)
         end
 
 
-
+        STATE.activeGui = gui_tactics
         STATE.currentPhase = game_phases.TACTICS
+
+    elseif newPhase == game_phases.ACTION then
+
+
+        changePhase(game_phases.MOVEMENT)
 
     end
 
@@ -132,9 +137,12 @@ function love.load()
         
         for _=0, love.math.random(1, 6), 1 do
             local randomCoords = HL_coords.axial:New( love.math.random(4), love.math.random(4) )
-            local newUnit = Units:New(player, Units.unit_types.INFANTRY, randomCoords)
-            table.insert(player.units, newUnit)
-            Hexfield.tiles[ tostring(randomCoords) ].occupant = newUnit
+
+            if Hexfield.tiles[tostring(randomCoords)].occupant == nil then
+                local newUnit = Units:New(player, Units.unit_types.INFANTRY, randomCoords)
+                table.insert(player.units, newUnit)
+                Hexfield.tiles[ tostring(randomCoords) ].occupant = newUnit
+            end
         end
 
     end
