@@ -2,6 +2,8 @@
 
 gui = require('lib.gspot')
 
+activeGui = require("ui.movement")
+
 Hexlib = require("lib.hexlib")
 hl_coords = Hexlib.coords
 
@@ -53,11 +55,6 @@ function love.load()
         Hexfield.tiles[ tostring(randomCoords) ].occupant = newUnit
     end
 
-    nextButton = gui:button("Next!", {x = 100, y = 0, w=gui.style.unit*8, h=gui.style.unit*2})
-    function nextButton:click()
-        print("Okay")
-    end
-
 end
 
 function love.update(dt)
@@ -73,7 +70,7 @@ function love.update(dt)
 
     end
 
-    gui:update(dt)
+    activeGui:update(dt)
 
 end
 
@@ -105,10 +102,27 @@ function love.draw()
     -- Exit to world space
     love.graphics.translate(-100, -100)
 
-    gui:draw()
+    activeGui:draw()
 
     -- Debug
     love.graphics.print(STATE.currentPhase, 0, 0)
     
 
+end
+
+
+love.keypressed = function(key, code, isrepeat)
+  activeGui:keypress(key)
+end
+love.textinput = function(key)
+  activeGui:textinput(key)
+end
+love.mousepressed = function(x, y, button)
+  activeGui:mousepress(x, y, button)
+end
+love.mousereleased = function(x, y, button)
+  activeGui:mouserelease(x, y, button)
+end
+love.wheelmoved = function(x, y)
+  activeGui:mousewheel(x, y)
 end
