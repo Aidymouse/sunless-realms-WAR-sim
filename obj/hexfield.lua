@@ -1,6 +1,6 @@
 -- Responsible for rendering the hex field
 
-hexlib = require("lib.hexlib")
+local hexlib = require("lib.hexlib")
 
 
 
@@ -38,7 +38,11 @@ function Hexfield.update(dt)
         local cellCoords = hl_convert.worldToAxial(love.mouse.custom_getXYWithOffset())
 
         local tileId = tostring(cellCoords)
-        if tileExists(tileId) then Hexfield.tiles[ tileId ].terrain = terrain.WATER end
+
+        if not tileExists(tileId) then return end
+        --if tileExists(tileId) then Hexfield.tiles[ tileId ].terrain = terrain.WATER end
+
+        print(Hexfield.tiles[tileId].occupant)
 
     end
 

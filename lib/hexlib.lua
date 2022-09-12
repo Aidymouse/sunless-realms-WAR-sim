@@ -1,4 +1,4 @@
-Hexlib = {}
+local Hexlib = {}
 
 -- Enums
 Hexlib.hex_orientation = {FLATTOP = "flattop", POINTYTOP = "pointytop"}
