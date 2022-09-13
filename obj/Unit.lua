@@ -27,8 +27,8 @@ function Unit:New(player, type, axialCoord, color, size)
         },
 
         tactics = {
-            chosenTactic = nil,
-            targetedTileCoords = nil
+            chosenTactic = tactics.NONE,
+            target = nil
         }
 
     }
@@ -64,8 +64,8 @@ function Unit:movement_refreshMovement()
 end
 
 function Unit:tactics_refresh()
-    self.tactics.chosenTactic = nil
-    self.tactics.targetedTileCoords = nil
+    self.tactics.chosenTactic = tactics.NONE
+    self.tactics.target = nil
 end
 
 return Unit

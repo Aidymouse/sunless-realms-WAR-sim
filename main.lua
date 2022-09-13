@@ -2,8 +2,8 @@
 
 local gui = require('lib.gspot')
 
-local gui_movement = require("ui.movement_ui")
-local gui_tactics = require("ui.tactics_ui")
+local gui_movement = require("ui.ui_movement")
+local gui_tactics = require("ui.ui_tactics")
 
 local Hexlib = require("lib.hexlib")
 local HL_coords = Hexlib.coords
@@ -28,6 +28,7 @@ game_phases = {
 }
 
 tactics = {
+    NONE = "none",
     FIGHT = "fight",
     HELP = "help",
     HINDER = "hinder"
@@ -35,7 +36,7 @@ tactics = {
 
 STATE = {
     currentPhase = game_phases.MOVEMENT,
-    activeGui = gui_movement,
+    activeGuis = {gui_movement},
 
     armies = {},
 
@@ -50,6 +51,10 @@ STATE = {
     },
 
     TACTICS = {
+
+        currentlySelectedUnit = nil, -- Type: unit
+        currentlyDeciding = nil, -- Type: tactics
+        actingPlayerIndex = 1
 
     },
 
@@ -104,7 +109,7 @@ function changePhase(newPhase)
         STATE.MOVEMENT.validMoveTiles = {}
         STATE.MOVEMENT.actingPlayer = PLAYERS[1] -- TODO: Base first player on tactical advantage
 
-        STATE.activeGui = gui_movement
+        STATE.activeGuis = {gui_movement}
         STATE.currentPhase = game_phases.MOVEMENT
 
     elseif newPhase == game_phases.TACTICS then
@@ -116,8 +121,11 @@ function changePhase(newPhase)
 
         end
 
+        STATE.TACTICS.currentlyDeciding = nil
+        STATE.TACTICS.currentlySelectedUnit = nil
+        STATE.TACTICS.actingPlayerIndex = 1
 
-        STATE.activeGui = gui_tactics
+        STATE.activeGuis = {gui_tactics}
         STATE.currentPhase = game_phases.TACTICS
 
     elseif newPhase == game_phases.ACTION then
@@ -157,7 +165,9 @@ function love.update(dt)
     PHASES[STATE.currentPhase].update(dt)
 
     -- STATE
-    STATE.activeGui:update(dt)
+    for _, gui in ipairs(STATE.activeGuis) do
+        gui:update(dt)
+    end
 
 end
 
@@ -188,7 +198,9 @@ function love.draw()
     -- Exit to world space
     love.graphics.translate(-100, -100)
 
-    STATE.activeGui:draw()
+    for _, gui in ipairs(STATE.activeGuis) do
+        gui:draw()
+    end
 
     -- Debug
     love.graphics.print(STATE.currentPhase, 0, 0)
@@ -198,21 +210,33 @@ end
 
 
 love.keypressed = function(key, code, isrepeat)
-  STATE.activeGui:keypress(key)
+
+    for _, gui in ipairs(STATE.activeGuis) do
+        gui:keypress(key)
+    end
+
 end
 love.textinput = function(key)
-  STATE.activeGui:textinput(key)
+    for _, gui in ipairs(STATE.activeGuis) do
+        gui:textinput(key)
+    end
 end
 love.mousepressed = function(x, y, button)
-    STATE.activeGui:mousepress(x, y, button)
+    for _, gui in ipairs(STATE.activeGuis) do
+        gui:mousepress(x, y, button)
+    end
 
     PHASES[STATE.currentPhase].mousepressed(x, y, button)
 
 
 end
 love.mousereleased = function(x, y, button)
-  STATE.activeGui:mouserelease(x, y, button)
+    for _, gui in ipairs(STATE.activeGuis) do
+        gui:mouserelease(x, y, button)
+    end
 end
 love.wheelmoved = function(x, y)
-  STATE.activeGui:mousewheel(x, y)
+    for _, gui in ipairs(STATE.activeGuis) do
+        gui:mousewheel(x, y)
+    end
 end
