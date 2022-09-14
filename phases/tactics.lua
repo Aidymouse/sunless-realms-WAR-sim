@@ -14,11 +14,13 @@ end
 
 function phase_tactics.mousepressed(x, y, button)
 
+    local selectedUnit = STATE.TACTICS.currentlySelectedUnit
+
     local clickedTile = Hexfield.getTileFromWorldCoords(love.mouse.custom_getXYWithOffset())
     if clickedTile == nil then return end
     if clickedTile.occupant == nil then return end
 
-    if STATE.TACTICS.currentlySelectedUnit == nil then
+    if selectedUnit == nil then
 
         if clickedTile.occupant.controller == PLAYERS[STATE.TACTICS.actingPlayerIndex] then
             STATE.TACTICS.currentlySelectedUnit = clickedTile.occupant
@@ -27,16 +29,18 @@ function phase_tactics.mousepressed(x, y, button)
             table.insert(STATE.activeGuis, gui_tactics_unit)
         end
     
-    elseif STATE.TACTICS.currentlyDeciding ~= nil then
+    elseif selectedUnit ~= nil then
 
-        if clickedTile.occupant ~= STATE.TACTICS.currentlySelectedUnit then
-            STATE.TACTICS.currentlySelectedUnit.tactics.chosenTactic = STATE.TACTICS.currentlyDeciding
-            STATE.TACTICS.currentlySelectedUnit.tactics.target = clickedTile.occupant
+        if clickedTile.occupant == selectedUnit then return end
 
-            STATE.TACTICS.currentlySelectedUnit = nil
-            STATE.TACTICS.currentlyDeciding = nil
-            STATE.activeGuis = {gui_tactics}
-        end
+        -- Update Unit Tactics State
+        selectedUnit.tactics.chosenTactic = STATE.TACTICS.currentlyDeciding
+        selectedUnit.tactics.target = clickedTile.occupant
+
+        -- Update State
+        STATE.TACTICS.currentlySelectedUnit = nil
+        STATE.TACTICS.currentlyDeciding = nil
+        STATE.activeGuis = {gui_tactics}
 
     
     end
@@ -96,6 +100,15 @@ function phase_tactics.draw()
     love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("Acting: " .. PLAYERS[STATE.TACTICS.actingPlayerIndex].name, 0, 16)
+    local tactic = "None"
+    if STATE.TACTICS.currentlyDeciding ~= nil then tactic = STATE.TACTICS.currentlyDeciding end
+    love.graphics.print("Deciding: " .. tactic, 0, 48)
+    
+    local unit = "None"
+    if STATE.TACTICS.currentlySelectedUnit ~= nil then unit = STATE.TACTICS.currentlySelectedUnit end
+    love.graphics.print("Deciding: " .. tostring(unit), 0, 64)
+
+
     love.graphics.translate(CAMERA.offsetX, CAMERA.offsetY)
 
 

@@ -104,6 +104,8 @@ function changePhase(newPhase)
 
         end
 
+        Hexfield.movement_refresh()
+
 
         STATE.MOVEMENT.playersWhoHaveMoved = {}
         STATE.MOVEMENT.validMoveTiles = {}
@@ -137,23 +139,32 @@ function changePhase(newPhase)
 
 end
 
--- Main Love Functions
-function love.load()
+local function populateRandomUnits()
 
-    -- Populate random units
     for _, player in ipairs(PLAYERS) do
-        
-        for _=0, love.math.random(1, 6), 1 do
-            local randomCoords = HL_coords.axial:New( love.math.random(4), love.math.random(4) )
+        local unitCounter = 1
+
+        for _ = 0, love.math.random(1, 6), 1 do
+            local randomCoords = HL_coords.axial:New(love.math.random(4), love.math.random(4))
 
             if Hexfield.tiles[tostring(randomCoords)].occupant == nil then
-                local newUnit = Units:New(player, Units.unit_types.INFANTRY, randomCoords)
+                local newUnit = Units:New(player, Units.unit_types.INFANTRY, randomCoords, unitCounter)
                 table.insert(player.units, newUnit)
-                Hexfield.tiles[ tostring(randomCoords) ].occupant = newUnit
+                Hexfield.tiles[tostring(randomCoords)].occupant = newUnit
+                unitCounter = unitCounter+1
             end
         end
 
     end
+
+end
+
+
+-- Main Love Functions
+function love.load()
+
+    -- Populate random units
+    populateRandomUnits()
 
     changePhase(game_phases.MOVEMENT)
 
@@ -192,6 +203,16 @@ function love.draw()
 
     end
 
+    if Hexfield.tileExists(tostring(cellCoords)) then
+        if Hexfield.tiles[tostring(cellCoords)].occupant ~= nil then
+
+            love.graphics.print(tostring(Hexfield.tiles[tostring(cellCoords)].occupant), 100, 50)
+            
+        else
+            love.graphics.print("No occupant", 100, 50)
+        end
+    end
+
 
     PHASES[STATE.currentPhase].draw()
 
@@ -222,11 +243,12 @@ love.textinput = function(key)
     end
 end
 love.mousepressed = function(x, y, button)
+    PHASES[STATE.currentPhase].mousepressed(x, y, button)
+    
     for _, gui in ipairs(STATE.activeGuis) do
         gui:mousepress(x, y, button)
     end
 
-    PHASES[STATE.currentPhase].mousepressed(x, y, button)
 
 
 end

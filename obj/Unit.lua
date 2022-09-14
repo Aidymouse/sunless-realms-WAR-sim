@@ -12,7 +12,7 @@ Unit.unit_types = {
 }
 local unit_types = Unit.unit_types
 
-function Unit:New(player, type, axialCoord, color, size)
+function Unit:New(player, type, axialCoord, size)
     assert(player ~= nil, "A unit needs a player!")
 
     u = {
@@ -23,7 +23,8 @@ function Unit:New(player, type, axialCoord, color, size)
         controller = player,
 
         movement = {
-            movesLeft = 1
+            maxMoves = 1,
+            destinationCoords = nil
         },
 
         tactics = {
@@ -56,11 +57,7 @@ end
 
 
 function Unit:movement_refreshMovement()
-    if self.type == unit_types.CAVALRY or self.type == unit_types.FLYING then
-        self.movement.movesLeft = 2
-    else
-        self.movement.movesLeft = 1
-    end
+    self.movement.destinationCoords = nil
 end
 
 function Unit:tactics_refresh()

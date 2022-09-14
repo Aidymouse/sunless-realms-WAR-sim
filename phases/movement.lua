@@ -15,7 +15,7 @@ function phase_movement.update(dt)
 
 end
 
-function deselectUnit()
+local function deselectUnit()
     STATE.MOVEMENT.currentlySelectedUnit = nil
     STATE.MOVEMENT.validMoveTiles = {}
 
@@ -23,7 +23,9 @@ end
 
 function phase_movement.mousepressed(x, y, button)
 
-    if STATE.MOVEMENT.currentlySelectedUnit == nil then
+    local selectedUnit = STATE.MOVEMENT.currentlySelectedUnit
+
+    if selectedUnit == nil then
 
         local clickedTile = Hexfield.getTileFromWorldCoords(love.mouse.custom_getXYWithOffset())
 
@@ -33,7 +35,6 @@ function phase_movement.mousepressed(x, y, button)
         local actingPlayer = PLAYERS[STATE.MOVEMENT.actingPlayerIndex]
 
         if clickedTile.occupant.controller ~= actingPlayer then return end
-        if clickedTile.occupant.movement.movesLeft <= 0 then return end
 
         STATE.MOVEMENT.currentlySelectedUnit = clickedTile.occupant
 
@@ -45,32 +46,43 @@ function phase_movement.mousepressed(x, y, button)
             end
         end
         
-        STATE.MOVEMENT.validMoveTiles = validNeigbours
+        STATE.MOVEMENT.validMoveTiles = neighbours
 
 
-    elseif STATE.MOVEMENT.currentlySelectedUnit then
+    else
 
+        
         local clickedTile = Hexfield.getTileFromWorldCoords(love.mouse.custom_getXYWithOffset())
-        if clickedTile == nil then 
+        if clickedTile == nil then
             deselectUnit()
             return
         end
 
 
+        if tostring(clickedTile.coords) == tostring(selectedUnit.occupiedTileCoords) then
+            selectedUnit.movement.destinationCoords = nil
+        end
+
         for _, tile in ipairs(STATE.MOVEMENT.validMoveTiles) do
             if tostring(clickedTile.coords) == tostring(tile.coords) then -- We have clicked on a valid tile
 
+                selectedUnit.movement.destinationCoords = tile.coords
+
                 -- De-register occupant of current unit tile
-                Hexfield.tiles[tostring( STATE.MOVEMENT.currentlySelectedUnit.occupiedTileCoords )].occupant = nil
+                --Hexfield.tiles[tostring(selectedUnit.occupiedTileCoords)].occupant = nil
+
                 
                 -- Change unit tile
-                STATE.MOVEMENT.currentlySelectedUnit.occupiedTileCoords = clickedTile.coords
+                --selectedUnit.occupiedTileCoords = clickedTile.coords
+
 
                 -- Deduct movement point
-                STATE.MOVEMENT.currentlySelectedUnit.movement.movesLeft = STATE.MOVEMENT.currentlySelectedUnit.movement.movesLeft - 1
+                --selectedUnit.movement.moesUsed = selectedUnit.movement.movesUsed + 1
+
 
                 -- Register occupant of unit tile
-                Hexfield.tiles[tostring( clickedTile.coords )].occupant = STATE.MOVEMENT.currentlySelectedUnit
+                --Hexfield.tiles[tostring(clickedTile.coords)].occupant = selectedUnit
+
                 
                 -- Reset state
                 deselectUnit()
@@ -93,6 +105,9 @@ end
 
 function phase_movement.draw()
 
+    local curPlayer = PLAYERS[STATE.MOVEMENT.actingPlayerIndex]
+
+    -- Valid Tile Dots
     if STATE.MOVEMENT.currentlySelectedUnit then
         
         local centerCoords = HL_convert.axialToWorld( STATE.MOVEMENT.currentlySelectedUnit.occupiedTileCoords )
@@ -109,10 +124,68 @@ function phase_movement.draw()
 
     end
 
+    -- Movement Plans
+    for _, unit in ipairs(curPlayer.units) do
+        
+        if unit.movement.destinationCoords ~= nil then
+            
+            local startXY = HL_convert.axialToWorld(unit.occupiedTileCoords)
+            local endXY = HL_convert.axialToWorld(unit.movement.destinationCoords)
+
+            love.graphics.setColor(1, 1, 0)
+            love.graphics.line(startXY.x, startXY.y, endXY.x, endXY.y)
+
+
+        end
+
+    end
+
     love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("Acting: "..PLAYERS[STATE.MOVEMENT.actingPlayerIndex].name, 0, 16)
     love.graphics.translate(CAMERA.offsetX, CAMERA.offsetY)
+
+end
+
+function phase_movement.validateMovement()
+
+    -- Returns false if an unit tries to move into a unit that isnt moving
+    local curPlayer = PLAYERS[STATE.MOVEMENT.actingPlayerIndex]
+
+    for _, unit in ipairs(curPlayer.units) do
+        if unit.movement.destinationCoords ~= nil then
+
+            local destinationOccupant = Hexfield.tiles[tostring(unit.movement.destinationCoords)].occupant
+            if destinationOccupant == nil then goto continue end
+
+            if destinationOccupant.movement.destinationCoords == nil then return false end
+        end
+
+        ::continue::
+    end
+
+    return true
+
+
+end
+
+function phase_movement.commitMovement()
+
+    
+    local curPlayer = PLAYERS[STATE.MOVEMENT.actingPlayerIndex]
+    
+    -- TODO: Bug if you switch places where the second one.
+    for _, unit in ipairs(curPlayer.units) do
+        if unit.movement.destinationCoords ~= nil then
+            
+            -- Deregister occupant
+            Hexfield.tiles[tostring(unit.occupiedTileCoords)].occupant = nil
+            
+            unit.occupiedTileCoords = unit.movement.destinationCoords
+            
+            Hexfield.tiles[tostring(unit.occupiedTileCoords)].occupant = unit
+        end
+    end
 
 end
 

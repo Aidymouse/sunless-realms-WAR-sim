@@ -33,9 +33,10 @@ Hexfield.hexDirVectors = {
 }
 
 
-local function tileExists(id)
+function Hexfield.tileExists(id)
    return Hexfield.tiles[id] ~= nil
 end
+local tileExists = Hexfield.tileExists
 
 function Hexfield.getTileFromWorldCoords(XY)
 
@@ -94,12 +95,19 @@ function Hexfield.draw()
         love.graphics.polygon("fill", curPath)
         love.graphics.setColor(0, 0, 0, 1)
         love.graphics.polygon("line", curPath)
-        
-        
 
     end
+
+
 end
 
+function Hexfield.movement_refresh()
+    --[[
+    for id, tile in pairs(Hexfield.tiles) do
+        tile.movement.effectiveOccupant = nil
+    end
+    ]]
+end
 
 function populate()
 
@@ -107,7 +115,13 @@ function populate()
         for r=0, 4, 1 do
 
             local newCoords = HL_coords.axial:New(q, r)
-            local newTile = { coords = newCoords, terrain=terrain.PLAINS }
+
+            local newTile = {
+                coords = newCoords,
+                terrain=terrain.PLAINS,
+                occupant=nil,
+            }
+            
             Hexfield.tiles[ tostring(newCoords) ] = newTile
 
             if love.math.random(1, 3) == 1 then
