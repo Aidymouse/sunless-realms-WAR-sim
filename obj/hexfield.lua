@@ -14,7 +14,7 @@ terrain = {
 terrainAttributes = {}
 
 terrainAttributes[""] = {color={1, 1, 1} }
-terrainAttributes[terrain.PLAINS] = {color={0, 1, 0}}
+terrainAttributes[terrain.PLAINS] = { color = { 201/255, 1, 115/255 } }
 terrainAttributes[terrain.SWAMP] = {color={0, 0.4, 0}}
 terrainAttributes[terrain.WATER] = {color={0.6, 0.6, 1}}
 
@@ -102,14 +102,14 @@ function Hexfield.draw()
 end
 
 function Hexfield.movement_refresh()
-    --[[
+
     for id, tile in pairs(Hexfield.tiles) do
-        tile.movement.effectiveOccupant = nil
+        tile.movement.effectiveOccupant = tile.occupant
     end
-    ]]
+    
 end
 
-function populate()
+local function populate()
 
     for q=0, 4, 1 do
         for r=0, 4, 1 do
@@ -120,6 +120,10 @@ function populate()
                 coords = newCoords,
                 terrain=terrain.PLAINS,
                 occupant=nil,
+
+                movement = {
+                    effectiveOccupant = nil,
+                }
             }
             
             Hexfield.tiles[ tostring(newCoords) ] = newTile

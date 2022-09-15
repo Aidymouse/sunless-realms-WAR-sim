@@ -5,6 +5,10 @@ local HL_convert = Hexlib.coordConversions
 
 local phase_movement = {}
 
+local moveQueue = {
+    -- { unit, destinationCoords }
+}
+
 function phase_movement.update(dt)
 
     if STATE.MOVEMENT.currentlySelectedUnit == nil then
@@ -18,7 +22,6 @@ end
 local function deselectUnit()
     STATE.MOVEMENT.currentlySelectedUnit = nil
     STATE.MOVEMENT.validMoveTiles = {}
-
 end
 
 function phase_movement.mousepressed(x, y, button)
@@ -35,56 +38,40 @@ function phase_movement.mousepressed(x, y, button)
         local actingPlayer = PLAYERS[STATE.MOVEMENT.actingPlayerIndex]
 
         if clickedTile.occupant.controller ~= actingPlayer then return end
+        if clickedTile.occupant.movement.hasMoved then return end
 
         STATE.MOVEMENT.currentlySelectedUnit = clickedTile.occupant
 
         local neighbours = Hexfield.getNeighbouringTiles(clickedTile.coords)
         local validNeigbours = {}
         for _, tile in ipairs(neighbours) do
-            if tile.occupant == nil then
+            if tile.movement.effectiveOccupant == nil then
                 table.insert(validNeigbours, tile)
             end
         end
-        
-        STATE.MOVEMENT.validMoveTiles = neighbours
 
+        STATE.MOVEMENT.validMoveTiles = validNeigbours
 
     else
 
-        
         local clickedTile = Hexfield.getTileFromWorldCoords(love.mouse.custom_getXYWithOffset())
         if clickedTile == nil then
             deselectUnit()
             return
         end
 
-
         if tostring(clickedTile.coords) == tostring(selectedUnit.occupiedTileCoords) then
-            selectedUnit.movement.destinationCoords = nil
+            return
         end
 
         for _, tile in ipairs(STATE.MOVEMENT.validMoveTiles) do
             if tostring(clickedTile.coords) == tostring(tile.coords) then -- We have clicked on a valid tile
 
                 selectedUnit.movement.destinationCoords = tile.coords
+                selectedUnit.movement.hasMoved = true
+                Hexfield.tiles[tostring(tile.coords)].movement.effectiveOccupant = selectedUnit
+                Hexfield.tiles[tostring(selectedUnit.occupiedTileCoords)].movement.effectiveOccupant = nil
 
-                -- De-register occupant of current unit tile
-                --Hexfield.tiles[tostring(selectedUnit.occupiedTileCoords)].occupant = nil
-
-                
-                -- Change unit tile
-                --selectedUnit.occupiedTileCoords = clickedTile.coords
-
-
-                -- Deduct movement point
-                --selectedUnit.movement.moesUsed = selectedUnit.movement.movesUsed + 1
-
-
-                -- Register occupant of unit tile
-                --Hexfield.tiles[tostring(clickedTile.coords)].occupant = selectedUnit
-
-                
-                -- Reset state
                 deselectUnit()
                 break
 
@@ -125,6 +112,8 @@ function phase_movement.draw()
     end
 
     -- Movement Plans
+
+    --[[
     for _, unit in ipairs(curPlayer.units) do
         
         if unit.movement.destinationCoords ~= nil then
@@ -135,10 +124,10 @@ function phase_movement.draw()
             love.graphics.setColor(1, 1, 0)
             love.graphics.line(startXY.x, startXY.y, endXY.x, endXY.y)
 
-
         end
 
     end
+    ]]
 
     love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
     love.graphics.setColor(1, 1, 1)
@@ -147,6 +136,7 @@ function phase_movement.draw()
 
 end
 
+--[[
 function phase_movement.validateMovement()
 
     -- Returns false if an unit tries to move into a unit that isnt moving
@@ -168,6 +158,8 @@ function phase_movement.validateMovement()
 
 
 end
+]]
+
 
 function phase_movement.commitMovement()
 
@@ -179,11 +171,16 @@ function phase_movement.commitMovement()
         if unit.movement.destinationCoords ~= nil then
             
             -- Deregister occupant
+            
+
             Hexfield.tiles[tostring(unit.occupiedTileCoords)].occupant = nil
-            
+
             unit.occupiedTileCoords = unit.movement.destinationCoords
+
+            local destinationTile = Hexfield.tiles[tostring(unit.movement.destinationCoords)]
+            destinationTile.occupant = destinationTile.effectiveOccupant
             
-            Hexfield.tiles[tostring(unit.occupiedTileCoords)].occupant = unit
+            
         end
     end
 

@@ -175,6 +175,13 @@ function love.update(dt)
     Hexfield.update(dt)
     PHASES[STATE.currentPhase].update(dt)
 
+    -- UNITS
+    for _, player in ipairs(PLAYERS) do
+        for _, unit in ipairs(player.units) do
+            unit:update(dt)
+        end
+    end
+
     -- STATE
     for _, gui in ipairs(STATE.activeGuis) do
         gui:update(dt)
@@ -206,10 +213,10 @@ function love.draw()
     if Hexfield.tileExists(tostring(cellCoords)) then
         if Hexfield.tiles[tostring(cellCoords)].occupant ~= nil then
 
-            love.graphics.print(tostring(Hexfield.tiles[tostring(cellCoords)].occupant), 100, 50)
+            love.graphics.print(tostring(Hexfield.tiles[tostring(cellCoords)].occupant), 300, 0)
             
         else
-            love.graphics.print("No occupant", 100, 50)
+            love.graphics.print("No occupant", 300, 0)
         end
     end
 
