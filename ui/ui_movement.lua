@@ -25,5 +25,8 @@ nextButton.click = function(this)
 
 end
 
+local undoButton = gui_movement:button("Undo Move", { x = 150, y = gspot.style.unit*2, w = 120, h = gspot.style.unit * 2 })
+undoButton.click = phase_movement.undoMovement
+
 
 return gui_movement

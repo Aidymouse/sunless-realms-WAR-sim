@@ -38,7 +38,7 @@ function phase_movement.mousepressed(x, y, button)
         local actingPlayer = PLAYERS[STATE.MOVEMENT.actingPlayerIndex]
 
         if clickedTile.occupant.controller ~= actingPlayer then return end
-        if clickedTile.occupant.movement.hasMoved then return end
+        if clickedTile.occupant.movement.movesMade >= clickedTile.occupant.movement.maxMoves then return end
 
         STATE.MOVEMENT.currentlySelectedUnit = clickedTile.occupant
 
@@ -67,8 +67,10 @@ function phase_movement.mousepressed(x, y, button)
         for _, tile in ipairs(STATE.MOVEMENT.validMoveTiles) do
             if tostring(clickedTile.coords) == tostring(tile.coords) then -- We have clicked on a valid tile
 
+                table.insert(moveQueue, { unit=selectedUnit, destinationId=tostring(tile.coords) } )
+
                 selectedUnit.movement.destinationCoords = tile.coords
-                selectedUnit.movement.hasMoved = true
+                selectedUnit.movement.movesMade = selectedUnit.movement.movesMade + 1
                 Hexfield.tiles[tostring(tile.coords)].movement.effectiveOccupant = selectedUnit
                 Hexfield.tiles[tostring(selectedUnit.occupiedTileCoords)].movement.effectiveOccupant = nil
 
@@ -81,11 +83,21 @@ function phase_movement.mousepressed(x, y, button)
         deselectUnit()
 
 
-
-
-
     end
-    
+
+
+end
+
+function phase_movement.undoMovement()
+
+    if #moveQueue < 1 then return end
+
+    local poppedMove = table.remove(moveQueue)
+
+    local destTile = Hexfield.tiles[ poppedMove.destinationId ]
+    destTile.movement.effectiveOccupant = nil
+    poppedMove.unit.movement.destinationCoords = nil
+    poppedMove.unit.movement.movesMade = poppedMove.unit.movement.movesMade - 1
 
 end
 
@@ -112,22 +124,6 @@ function phase_movement.draw()
     end
 
     -- Movement Plans
-
-    --[[
-    for _, unit in ipairs(curPlayer.units) do
-        
-        if unit.movement.destinationCoords ~= nil then
-            
-            local startXY = HL_convert.axialToWorld(unit.occupiedTileCoords)
-            local endXY = HL_convert.axialToWorld(unit.movement.destinationCoords)
-
-            love.graphics.setColor(1, 1, 0)
-            love.graphics.line(startXY.x, startXY.y, endXY.x, endXY.y)
-
-        end
-
-    end
-    ]]
 
     love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
     love.graphics.setColor(1, 1, 1)
@@ -163,22 +159,21 @@ end
 
 function phase_movement.commitMovement()
 
-    
+
     local curPlayer = PLAYERS[STATE.MOVEMENT.actingPlayerIndex]
-    
-    -- TODO: Bug if you switch places where the second one.
+
     for _, unit in ipairs(curPlayer.units) do
         if unit.movement.destinationCoords ~= nil then
-            
-            -- Deregister occupant
-            
 
+            -- Deregister occupant
             Hexfield.tiles[tostring(unit.occupiedTileCoords)].occupant = nil
 
+            -- Update units occupied tile
             unit.occupiedTileCoords = unit.movement.destinationCoords
 
+            -- Update occupant of destination tile 
             local destinationTile = Hexfield.tiles[tostring(unit.movement.destinationCoords)]
-            destinationTile.occupant = destinationTile.effectiveOccupant
+            destinationTile.occupant = destinationTile.movement.effectiveOccupant
             
             
         end

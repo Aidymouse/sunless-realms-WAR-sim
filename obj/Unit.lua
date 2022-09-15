@@ -27,7 +27,7 @@ function Unit:New(player, type, axialCoord, size)
         movement = {
             maxMoves = 1,
             destinationCoords = nil,
-            hasMoved = false
+            movesMade = 0
         },
 
         tactics = {
@@ -77,6 +77,7 @@ end
 
 function Unit:movement_refreshMovement()
     self.movement.destinationCoords = nil
+    self.movement.movesMade = 0
 end
 
 function Unit:tactics_refresh()
