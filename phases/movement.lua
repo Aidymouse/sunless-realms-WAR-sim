@@ -28,7 +28,8 @@ local latestMovePlanTile
 function phase_movement.refresh()
     State.playersWhoHaveMoved = {}
     State.validMoveTiles = {}
-    State.actingPlayer = PLAYERS[1]
+    State.actingPlayerIndex = 1 -- TODO: Find this based on tactical advantage
+    State.actingPlayer = PLAYERS[State.actingPlayerIndex]
 
 end
 
@@ -39,18 +40,6 @@ local function updateUnitPositon(unit, newTileCoords)
     Hexfield.tiles[tostring(newTileCoords)].occupant = unit
 
     unit.occupiedTileCoords = newTileCoords
-
-end
-
-local function verifyMovePlan(moveplan)
-
-    -- Check, does move plan end on another occupant?
-    local lastTile = moveplan[#moveplan]
-    if lastTile.occupant ~= nil then
-        return false
-    end
-
-    return true
 
 end
 
@@ -67,9 +56,46 @@ local function validateNewTile(tile)
     -- Move plan also include first tile, so subtract by 1 to correct
     if #State.selectedMovePlan-1 == (State.selectedUnit.movement.maxMoves - State.selectedUnit.movement.movesMade) then return false end
 
+    -- If the tile has an ally unit in it
+    -- And the tile the unit is moving from is free
+    -- And the unit we're moving in to has movement left
 
     if tile.occupant ~= nil then
         if tile.occupant.controller ~= State.selectedUnit.controller then return false end
+    end
+
+    return true
+end
+
+local function validateMovePlan()
+    
+    if #State.selectedMovePlan == 1 then return true end
+
+    local last_tile = State.selectedMovePlan[#State.selectedMovePlan]
+
+    if last_tile.occupant ~= nil then
+        if last_tile.occupant.controller == State.actingPlayer then
+            
+            local switch_unit = last_tile.occupant
+            local second_last_tile = State.selectedMovePlan[#State.selectedMovePlan-1]
+            if switch_unit.movement.movesMade == switch_unit.movement.maxMoves then return false end
+            if second_last_tile.occupant ~= nil and second_last_tile.occupant ~= State.selectedUnit then return false end
+            
+            -- Switch units! Well, kinda
+            --[[ Selected unit's position is going to be updated, but as part of that, it will
+                    overwrite the position it's currently sitting on before moving
+                    to its destination. By setting it's destination to where it wants to
+                    go, we won't set something to null that we shouldnt. Then we can
+                    update the switch units positon normally ]]
+            Hexfield.tiles[tostring(State.selectedUnit.occupiedTileCoords)].occupant = nil
+            State.selectedUnit.occupiedTileCoords = last_tile.coords
+            
+            updateUnitPositon(switch_unit, second_last_tile.coords)
+
+            switch_unit.movement.movesMade = switch_unit.movement.movesMade + 1
+
+
+        end
     end
 
     return true
@@ -84,7 +110,10 @@ function phase_movement.update(dt)
         if hoveredTile ~= latestMovePlanTile then
             print("Hovered new tile")
 
-            if #State.selectedMovePlan > 1 and hoveredTile == State.selectedMovePlan[#State.selectedMovePlan - 1] then
+
+            if hoveredTile.occupant ~= nil and hoveredTile.occupant == State.selectedUnit then
+                State.selectedMovePlan = {hoveredTile}
+            elseif hoveredTile == State.selectedMovePlan[#State.selectedMovePlan - 1] then
                 table.remove(State.selectedMovePlan)
             elseif validateNewTile(hoveredTile) then
                 table.insert(State.selectedMovePlan, hoveredTile)
@@ -106,11 +135,14 @@ function phase_movement.update(dt)
             print("Dropped")
 
             
-            --if verifyMovePlan(State.selectedMovePlan) then
-            --end
-            State.selectedUnit.movement.movesMade = State.selectedUnit.movement.movesMade + #State.selectedMovePlan-1
-            updateUnitPositon(State.selectedUnit,
-                State.selectedMovePlan[#State.selectedMovePlan].coords)
+            if validateMovePlan() then
+                State.selectedUnit.movement.movesMade = State.selectedUnit.movement.movesMade + #State.selectedMovePlan-1
+            
+                updateUnitPositon(
+                    State.selectedUnit,
+                    State.selectedMovePlan[#State.selectedMovePlan].coords
+                )
+            end
             
             State.selectedUnit = nil
             State.selectedMovePlan = {}
