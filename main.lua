@@ -21,6 +21,8 @@ CAMERA = {
     offsetY = 100
 }
 
+
+-- ENUMS
 game_phases = {
     MOVEMENT = "movement",
     TACTICS = "tactics",
@@ -34,6 +36,8 @@ tactics = {
     HINDER = "hinder"
 }
 
+
+-- State
 STATE = {
     currentPhase = game_phases.MOVEMENT,
     activeGuis = {gui_movement},
@@ -43,8 +47,9 @@ STATE = {
     -- Phases
     MOVEMENT = {
 
-        currentlySelectedUnit = nil,
-        validMoveTiles = {},
+        selectedUnit = nil,
+        selectedMovePlan = {},
+
         playersWhoHaveMoved = {},
         actingPlayerIndex = 1
 
@@ -105,7 +110,6 @@ function changePhase(newPhase)
         end
 
         Hexfield.movement_refresh()
-
 
         STATE.MOVEMENT.playersWhoHaveMoved = {}
         STATE.MOVEMENT.validMoveTiles = {}
@@ -210,30 +214,44 @@ function love.draw()
 
     end
 
-    if Hexfield.tileExists(tostring(cellCoords)) then
-        local mouseTile = Hexfield.tiles[tostring(cellCoords)]
-        if mouseTile.occupant ~= nil then
-
-            love.graphics.print(tostring(Hexfield.tiles[tostring(cellCoords)].occupant), 300, 0)
-            
-        else
-            love.graphics.print("No occupant", 300, 0)
-        end
-
-        if mouseTile.movement.effectiveOccupant ~= nil then
-            love.graphics.print(tostring(Hexfield.tiles[tostring(cellCoords)].effectiveOccupant), 300, 16)
-        end
-    end
+    
 
 
     PHASES[STATE.currentPhase].draw()
 
-    -- Exit to world space
-    love.graphics.translate(-100, -100)
+    -- Exit to screen space
+    love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
 
+    -- Draw Gui
     for _, gui in ipairs(STATE.activeGuis) do
         gui:draw()
     end
+
+    -- Display Mouse Info
+    --[[
+        local mxy = love.mouse.custom_getXYWithOffset()
+        love.graphics.print("Mouse Position (world space): "..mxy.x..", "..mxy.y, 0, 50)
+        ]]
+    love.graphics.print("Hovered Cell: "..cellCoords.q..", "..cellCoords.r, 0, 66)
+
+
+    -- Display current tiles occupant
+    if Hexfield.tileExists(tostring(cellCoords)) then
+        local mouseTile = Hexfield.tiles[tostring(cellCoords)]
+        if mouseTile.occupant ~= nil then
+
+            love.graphics.print("Current Occupant: "..tostring(Hexfield.tiles[tostring(cellCoords)].occupant), 0, love.graphics.getHeight()-16)
+
+        else
+            love.graphics.print("Current Occupant: No One", 0, love.graphics.getHeight()-16)
+        end
+
+    else
+
+        love.graphics.print("Current Occupant: —", 0, love.graphics.getHeight()-16)
+
+    end
+
 
     -- Debug
     love.graphics.print(STATE.currentPhase, 0, 0)

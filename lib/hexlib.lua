@@ -59,6 +59,9 @@ function Hexlib.axialRound(frac)
 		s = -q - r;
     end
 
+    if q == -0 then q = 0 end
+    if r == -0 then r = 0 end
+
 	return Hexlib.coords.axial:New(q, r)
 end
 
@@ -73,6 +76,12 @@ function Hexlib.coords.axial:New(q, r)
         q = q,
         r = r
     }
+    if type(q) == "table" then
+        o = {
+            q = q.q,
+            r = q.r
+        }
+    end
     setmetatable(o, self)
     self.__index = self
     self.__tostring = function(self) return "<"..self.q..":"..self.r..">" end

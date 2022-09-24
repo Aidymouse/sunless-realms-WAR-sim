@@ -46,6 +46,8 @@ function Hexfield.getTileFromWorldCoords(XY)
         return Hexfield.tiles[tostring(cellCoords)]
     end
 
+    return nil
+
 end
 
 ---Find all tiles that exist that are neighbours of supplied ID
@@ -104,7 +106,7 @@ end
 function Hexfield.movement_refresh()
 
     for id, tile in pairs(Hexfield.tiles) do
-        tile.movement.effectiveOccupant = tile.occupant
+        --tile.movement.effectiveOccupant = tile.occupant
     end
 
 end
@@ -120,10 +122,6 @@ local function populate()
                 coords = newCoords,
                 terrain=terrain.PLAINS,
                 occupant=nil,
-
-                movement = {
-                    effectiveOccupant = nil,
-                }
             }
             
             Hexfield.tiles[ tostring(newCoords) ] = newTile

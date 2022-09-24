@@ -26,7 +26,6 @@ function Unit:New(player, type, axialCoord, size)
 
         movement = {
             maxMoves = 2,
-            destinationCoords = nil,
             movesMade = 0
         },
 
@@ -51,10 +50,6 @@ function Unit:draw(mapAttr)
 
 
     local bottomcenterXY = HL_convert.axialToWorld( self.occupiedTileCoords, mapAttr )
-
-    if self.movement.destinationCoords ~= nil then
-        bottomcenterXY = HL_convert.axialToWorld(self.movement.destinationCoords, mapAttr)
-    end
 
     local flyingOffsetY = 0
     if self.type == unit_types.FLYING then
