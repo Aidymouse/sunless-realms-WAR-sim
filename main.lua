@@ -2,6 +2,10 @@
 
 local gui = require('lib.gspot')
 
+---@alias hex_orientation
+---| "flattop"
+---| "pointytop"
+
 
 
 local Hexlib = require("lib.hexlib")
@@ -9,10 +13,11 @@ local HL_coords = Hexlib.coords
 local HL_convert = Hexlib.coordConversions
 
 -- Global State Stuff, probs a bad idea
+---@alias map_attributes {hexWidth: number, hexHeight: number, orientation: hex_orientation}
 MAPATTRIBUTES = {
     hexWidth = 100,
     hexHeight = 60,
-    orientation = Hexlib.hex_orientation.FLATTOP
+    orientation = "flattop"
 }
 
 CAMERA = {
@@ -62,6 +67,12 @@ STATE = {
     }
 }
 
+---@class player
+---@field name string
+---@field units unit[]
+---@field color number[]
+
+---@type player[]
 PLAYERS = {
     {
         name="Player",

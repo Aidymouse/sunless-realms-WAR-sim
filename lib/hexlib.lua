@@ -3,16 +3,20 @@ local Hexlib = {}
 -- Enums
 Hexlib.hex_orientation = {FLATTOP = "flattop", POINTYTOP = "pointytop"}
 
+---@alias coords_XY {x: number, y: number}
 
 
 -- Methods
+---@param centerXY coords_XY
+---@param mapAttr map_attributes
+---@returns number[]
 function Hexlib.getHexPath(centerXY, mapAttr)
 
     mapAttr = mapAttr or MAPATTRIBUTES
 
-    width = mapAttr.hexWidth
-    height = mapAttr.hexHeight
-    orientation = mapAttr.orientation
+    local width = mapAttr.hexWidth
+    local height = mapAttr.hexHeight
+    local orientation = mapAttr.orientation
 
     -- Flat Top
     if orientation == Hexlib.hex_orientation.FLATTOP then

@@ -3,6 +3,22 @@ local HL_convert = Hexlib.coordConversions
 
 local phase_movement = require ("phases.movement")
 
+---@enum unit_type
+---| "levies"
+---| "infantry"
+---| "archers"
+---| "cavalry"
+---| "flying"
+---| "war machine"
+
+---@class unit
+---@field type unit_type The type of the unit
+---@field siex integer The size of the unit
+---@field occupiedTileCoords coords_axial
+---@field controller player
+---@field flyingTimer number
+
+---@type unit
 local Unit = {}
 
 Unit.unit_types = {
@@ -22,10 +38,18 @@ Unit.unit_attributes = {
     flying = { max_moves = 2 },
 }
 
+
+
+---@param player player The player who controls this unit
+---@param type unit_type Which type of unit
+---@param axialCoord coords_axial The coordinates of the hex this unit inhabits
+---@param size integer The size of the unit
+---@return unit Unit 
 function Unit:New(player, type, axialCoord, size)
     assert(player ~= nil, "A unit needs a player!")
 
-    u = {
+    ---@type unit
+    local u = {
         type = type or unit_types.INFANTRY,
         occupiedTileCoords = axialCoord,
         size = size or 5,
