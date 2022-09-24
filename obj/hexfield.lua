@@ -106,7 +106,7 @@ function Hexfield.movement_refresh()
     for id, tile in pairs(Hexfield.tiles) do
         tile.movement.effectiveOccupant = tile.occupant
     end
-    
+
 end
 
 local function populate()

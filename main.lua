@@ -46,7 +46,7 @@ STATE = {
         currentlySelectedUnit = nil,
         validMoveTiles = {},
         playersWhoHaveMoved = {},
-        actingPlayerIndex = 2
+        actingPlayerIndex = 1
 
     },
 
@@ -211,12 +211,17 @@ function love.draw()
     end
 
     if Hexfield.tileExists(tostring(cellCoords)) then
-        if Hexfield.tiles[tostring(cellCoords)].occupant ~= nil then
+        local mouseTile = Hexfield.tiles[tostring(cellCoords)]
+        if mouseTile.occupant ~= nil then
 
             love.graphics.print(tostring(Hexfield.tiles[tostring(cellCoords)].occupant), 300, 0)
             
         else
             love.graphics.print("No occupant", 300, 0)
+        end
+
+        if mouseTile.movement.effectiveOccupant ~= nil then
+            love.graphics.print(tostring(Hexfield.tiles[tostring(cellCoords)].effectiveOccupant), 300, 16)
         end
     end
 

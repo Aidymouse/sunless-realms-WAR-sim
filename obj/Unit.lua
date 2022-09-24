@@ -25,7 +25,7 @@ function Unit:New(player, type, axialCoord, size)
         flyingTimer = 0,
 
         movement = {
-            maxMoves = 1,
+            maxMoves = 2,
             destinationCoords = nil,
             movesMade = 0
         },
@@ -76,7 +76,7 @@ end
 
 
 function Unit:movement_refreshMovement()
-    self.movement.destinationCoords = nil
+    self.movement.destinationCoords = self.occupiedTileCoords
     self.movement.movesMade = 0
 end
 
