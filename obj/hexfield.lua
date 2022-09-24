@@ -5,6 +5,10 @@ local hexlib = require("lib.hexlib")
 local HL_convert = hexlib.coordConversions
 local HL_coords = hexlib.coords
 
+---@alias coords_axial {q: integer, r: integer} Axial Hex Coordinates
+---@alias coords_cube {q: integer, r: integer, s: integer} Cube Hex Coordinates
+---@alias tile { coords: coords_axial, terrain: terrain }
+
 terrain = {
     PLAINS = "plains",
     SWAMP = "swamp",
@@ -51,7 +55,7 @@ function Hexfield.getTileFromWorldCoords(XY)
 end
 
 ---Find all tiles that exist that are neighbours of supplied ID
----@param tileID string
+---@param axialCoords coords_axial coordinates
 ---@return table<tile> Tiles Table containing existing neighbouring tiles
 function Hexfield.getNeighbouringTiles(axialCoords)
 

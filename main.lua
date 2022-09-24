@@ -2,8 +2,7 @@
 
 local gui = require('lib.gspot')
 
-local gui_movement = require("ui.ui_movement")
-local gui_tactics = require("ui.ui_tactics")
+
 
 local Hexlib = require("lib.hexlib")
 local HL_coords = Hexlib.coords
@@ -37,6 +36,9 @@ tactics = {
 }
 
 
+
+
+
 -- State
 STATE = {
     currentPhase = game_phases.MOVEMENT,
@@ -45,15 +47,7 @@ STATE = {
     armies = {},
 
     -- Phases
-    MOVEMENT = {
-
-        selectedUnit = nil,
-        selectedMovePlan = {},
-
-        playersWhoHaveMoved = {},
-        actingPlayerIndex = 1
-
-    },
+    --MOVEMENT = PHASES[game_phases.MOVEMENT].state,
 
     TACTICS = {
 
@@ -85,6 +79,11 @@ PHASES = {}
 PHASES[game_phases.MOVEMENT] = require("phases.movement")
 PHASES[game_phases.TACTICS] = require("phases.tactics")
 
+
+local gui_movement = require("ui.ui_movement")
+local gui_tactics = require("ui.ui_tactics")
+
+
 love.mouse.custom_getXYWithOffset = function()
     return {x=love.mouse.getX() - CAMERA.offsetX, y=love.mouse.getY() - CAMERA.offsetY}
 end
@@ -111,9 +110,7 @@ function changePhase(newPhase)
 
         Hexfield.movement_refresh()
 
-        STATE.MOVEMENT.playersWhoHaveMoved = {}
-        STATE.MOVEMENT.validMoveTiles = {}
-        STATE.MOVEMENT.actingPlayer = PLAYERS[1] -- TODO: Base first player on tactical advantage
+        PHASES[game_phases.MOVEMENT].refresh()
 
         STATE.activeGuis = {gui_movement}
         STATE.currentPhase = game_phases.MOVEMENT

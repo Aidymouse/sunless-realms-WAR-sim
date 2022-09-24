@@ -37,7 +37,7 @@ function Hexlib.getHexPath(centerXY, mapAttr)
 
 end
 
-function round(num)
+local function round(num)
     return math.floor(num+0.5)
 end
 
@@ -65,6 +65,26 @@ function Hexlib.axialRound(frac)
 	return Hexlib.coords.axial:New(q, r)
 end
 
+
+local function cube_subtract(cube1, cube2)
+
+    return {q=cube1.q - cube2.q, r=cube1.r - cube2.r, s=cube1.s-cube2.s}
+
+end
+
+local function cube_distance(cube1, cube2)
+
+    local vec = cube_subtract(cube1, cube2)
+    return ( math.abs(vec.q) + math.abs(vec.r) + math.abs(vec.s) ) / 2
+
+end
+
+function Hexlib.axial_distance(axial1, axial2)
+    return cube_distance(
+        {q=axial1.q, r=axial1.r, s=-axial1.q-axial1.r},
+        {q=axial2.q, r=axial2.r, s=-axial2.q-axial2.r}
+    )
+end
 
 -- Coordinates
 Hexlib.coords = {

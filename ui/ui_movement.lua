@@ -1,6 +1,7 @@
 local gspot = require("lib.gspot")
 
 local phase_movement = require("phases.movement")
+local State = phase_movement.state
 
 local gui_movement = gspot()
 
@@ -9,18 +10,20 @@ nextButton.click = function(this)
 
     --if not phase_movement.validateMovement() then return end
 
-    table.insert(STATE.MOVEMENT.playersWhoHaveMoved, STATE.MOVEMENT.actingPlayerIndex)
-    if #STATE.MOVEMENT.playersWhoHaveMoved == #PLAYERS then
+    table.insert(State.playersWhoHaveMoved, State.actingPlayerIndex)
+    if #State.playersWhoHaveMoved == #PLAYERS then
         changePhase(game_phases.TACTICS)
     
     else
-        STATE.MOVEMENT.actingPlayerIndex = STATE.MOVEMENT.actingPlayerIndex + 1
+        State.actingPlayerIndex = State.actingPlayerIndex + 1
 
-        if STATE.MOVEMENT.actingPlayerIndex > #PLAYERS then
-            STATE.MOVEMENT.actingPlayerIndex = 1
+        if State.actingPlayerIndex > #PLAYERS then
+            State.actingPlayerIndex = 1
         end
 
     end
+
+    State.actingPlayer = PLAYERS[State.actingPlayerIndex]
 
 end
 
