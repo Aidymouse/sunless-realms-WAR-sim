@@ -72,6 +72,7 @@ local function validateMovePlan()
     if #State.selectedMovePlan == 1 then return true end
 
     local last_tile = State.selectedMovePlan[#State.selectedMovePlan]
+    if last_tile == nil then return false end
 
     if last_tile.occupant ~= nil then
         if last_tile.occupant.controller == State.actingPlayer then
@@ -111,20 +112,21 @@ function phase_movement.update(dt)
             print("Hovered new tile")
 
 
-            if hoveredTile.occupant ~= nil and hoveredTile.occupant == State.selectedUnit then
+            -- Reset move plan if hover over self tile
+            
+            if hoveredTile ~= nil and hoveredTile.occupant ~= nil and hoveredTile.occupant == State.selectedUnit then
                 State.selectedMovePlan = {hoveredTile}
+
+            -- Rewind move plan by one if we go back
             elseif hoveredTile == State.selectedMovePlan[#State.selectedMovePlan - 1] then
                 table.remove(State.selectedMovePlan)
+            
+            -- Try to add tile to move plan, if we can
             elseif validateNewTile(hoveredTile) then
                 table.insert(State.selectedMovePlan, hoveredTile)
                 
             end
             
-
-
-            -- If we mouse over the second latest move tile, roll back to that tile
-            --print(tostring(State.selectedMovePlan[#State.selectedMovePlan - 1].coords))
-
             
             latestMovePlanTile = hoveredTile
             

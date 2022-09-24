@@ -14,11 +14,19 @@ Unit.unit_types = {
 }
 local unit_types = Unit.unit_types
 
+Unit.unit_attributes = {
+    levies = { max_moves = 1},
+    infantry = { max_moves = 1},
+    archers = { max_moves = 1 },
+    cavalry = { max_moves = 2 },
+    flying = { max_moves = 2 },
+}
+
 function Unit:New(player, type, axialCoord, size)
     assert(player ~= nil, "A unit needs a player!")
 
     u = {
-        type = type or Unit.unit_types.INFANTRY,
+        type = type or unit_types.INFANTRY,
         occupiedTileCoords = axialCoord,
         size = size or 5,
 
@@ -27,7 +35,7 @@ function Unit:New(player, type, axialCoord, size)
         flyingTimer = 0,
 
         movement = {
-            maxMoves = 2,
+            maxMoves = Unit.unit_attributes[type or unit_types.INFANTRY].max_moves,
             movesMade = 0
         },
 

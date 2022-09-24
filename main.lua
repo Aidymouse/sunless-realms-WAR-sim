@@ -149,7 +149,7 @@ local function populateRandomUnits()
             local randomCoords = HL_coords.axial:New(love.math.random(4), love.math.random(4))
 
             if Hexfield.tiles[tostring(randomCoords)].occupant == nil then
-                local newUnit = Units:New(player, Units.unit_types.INFANTRY, randomCoords, unitCounter)
+                local newUnit = Units:New(player, Units.unit_types.FLYING, randomCoords, unitCounter)
                 table.insert(player.units, newUnit)
                 Hexfield.tiles[tostring(randomCoords)].occupant = newUnit
                 unitCounter = unitCounter+1
