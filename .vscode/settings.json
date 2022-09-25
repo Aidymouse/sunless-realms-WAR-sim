@@ -1,7 +1,8 @@
 {
     "Lua.runtime.version": "LuaJIT",
     "Lua.workspace.library": [
-        "${3rd}/love2d/library"
+        "${3rd}/love2d/library",
+        "/definitions"
     ],
     "Lua.workspace.checkThirdParty": false
 }

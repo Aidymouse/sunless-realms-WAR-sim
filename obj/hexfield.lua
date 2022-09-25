@@ -1,13 +1,9 @@
 -- Responsible for rendering the hex field
 
 local hexlib = require("lib.hexlib")
-
 local HL_convert = hexlib.coordConversions
 local HL_coords = hexlib.coords
 
----@alias coords_axial {q: integer, r: integer} Axial Hex Coordinates
----@alias coords_cube {q: integer, r: integer, s: integer} Cube Hex Coordinates
----@alias tile { coords: coords_axial, terrain: terrain }
 
 terrain = {
     PLAINS = "plains",
@@ -117,8 +113,8 @@ end
 
 local function populate()
 
-    for q=0, 4, 1 do
-        for r=0, 4, 1 do
+    for q=0, 8, 1 do
+        for r=0, 8, 1 do
 
             local newCoords = HL_coords.axial:New(q, r)
 

@@ -1,10 +1,10 @@
+-- Include Types
+-- These are purely useless, but let you know what types are around if you're using the lua language server
+require("definitions.coords")
+-- These ones are not useless, they have global enum defintions
+require("definitions.hexfield")
+require("definitions.unit")
 
-
-local gui = require('lib.gspot')
-
----@alias hex_orientation
----| "flattop"
----| "pointytop"
 
 
 
@@ -22,7 +22,10 @@ MAPATTRIBUTES = {
 
 CAMERA = {
     offsetX = 100,
-    offsetY = 100
+    offsetY = 100,
+
+    oldX = -1,
+    oldY = -1
 }
 
 
@@ -44,28 +47,22 @@ tactics = {
 
 
 
+
 -- State
 STATE = {
     currentPhase = game_phases.MOVEMENT,
-    activeGuis = {gui_movement},
 
     armies = {},
 
     -- Phases
     --MOVEMENT = PHASES[game_phases.MOVEMENT].state,
 
-    TACTICS = {
-
-        currentlySelectedUnit = nil, -- Type: unit
-        currentlyDeciding = nil, -- Type: tactics
-        actingPlayerIndex = 1
-
-    },
-
     ACTION = {
 
     }
 }
+
+
 
 ---@class player
 ---@field name string
@@ -90,10 +87,7 @@ PHASES = {}
 PHASES[game_phases.MOVEMENT] = require("phases.movement")
 PHASES[game_phases.TACTICS] = require("phases.tactics")
 
-
-local gui_movement = require("ui.ui_movement")
-local gui_tactics = require("ui.ui_tactics")
-
+Gui_manager = require("lib.guimanager")
 
 love.mouse.custom_getXYWithOffset = function()
     return {x=love.mouse.getX() - CAMERA.offsetX, y=love.mouse.getY() - CAMERA.offsetY}
@@ -114,7 +108,7 @@ function changePhase(newPhase)
         for _, player in ipairs(PLAYERS) do
 
             for _, unit in ipairs(player.units) do
-                unit:movement_refreshMovement()
+                unit:movement_refresh()
             end
 
         end
@@ -123,7 +117,7 @@ function changePhase(newPhase)
 
         PHASES[game_phases.MOVEMENT].refresh()
 
-        STATE.activeGuis = {gui_movement}
+        Gui_manager.set_gui("movement")
         STATE.currentPhase = game_phases.MOVEMENT
 
     elseif newPhase == game_phases.TACTICS then
@@ -135,11 +129,10 @@ function changePhase(newPhase)
 
         end
 
-        STATE.TACTICS.currentlyDeciding = nil
-        STATE.TACTICS.currentlySelectedUnit = nil
-        STATE.TACTICS.actingPlayerIndex = 1
-
-        STATE.activeGuis = {gui_tactics}
+        
+        PHASES[game_phases.TACTICS].refresh()
+        
+        Gui_manager.set_gui("tactics")
         STATE.currentPhase = game_phases.TACTICS
 
     elseif newPhase == game_phases.ACTION then
@@ -160,7 +153,7 @@ local function populateRandomUnits()
             local randomCoords = HL_coords.axial:New(love.math.random(4), love.math.random(4))
 
             if Hexfield.tiles[tostring(randomCoords)].occupant == nil then
-                local newUnit = Units:New(player, Units.unit_types.FLYING, randomCoords, unitCounter)
+                local newUnit = Units:New(player, UNIT_TYPES.INFANTRY, randomCoords, unitCounter)
                 table.insert(player.units, newUnit)
                 Hexfield.tiles[tostring(randomCoords)].occupant = newUnit
                 unitCounter = unitCounter+1
@@ -184,6 +177,7 @@ end
 
 function love.update(dt)
 
+
     Hexfield.update(dt)
     PHASES[STATE.currentPhase].update(dt)
 
@@ -195,8 +189,21 @@ function love.update(dt)
     end
 
     -- STATE
-    for _, gui in ipairs(STATE.activeGuis) do
-        gui:update(dt)
+    Gui_manager.update(dt)
+
+    -- CAMERA
+    if CAMERA.oldX ~= -1 then
+        local newX = love.mouse.getX()
+        local newY = love.mouse.getY()
+
+        local deltaX = newX - CAMERA.oldX
+        local deltaY = newY - CAMERA.oldY
+
+        CAMERA.offsetX = CAMERA.offsetX + deltaX
+        CAMERA.offsetY = CAMERA.offsetY + deltaY
+
+        CAMERA.oldX = newX
+        CAMERA.oldY = newY
     end
 
 end
@@ -231,16 +238,15 @@ function love.draw()
     love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
 
     -- Draw Gui
-    for _, gui in ipairs(STATE.activeGuis) do
-        gui:draw()
-    end
+    Gui_manager.draw()
+    
 
     -- Display Mouse Info
     --[[
         local mxy = love.mouse.custom_getXYWithOffset()
         love.graphics.print("Mouse Position (world space): "..mxy.x..", "..mxy.y, 0, 50)
         ]]
-    love.graphics.print("Hovered Cell: "..cellCoords.q..", "..cellCoords.r, 0, 66)
+    love.graphics.print("Hovered Cell: "..cellCoords.q..", "..cellCoords.r, 0, love.graphics.getHeight()-32)
 
 
     -- Display current tiles occupant
@@ -270,33 +276,38 @@ end
 
 love.keypressed = function(key, code, isrepeat)
 
-    for _, gui in ipairs(STATE.activeGuis) do
-        gui:keypress(key)
-    end
+    Gui_manager.keypressed(key)
+
+    
 
 end
 love.textinput = function(key)
-    for _, gui in ipairs(STATE.activeGuis) do
-        gui:textinput(key)
-    end
+    Gui_manager.textinput(key)
+
+    
 end
 love.mousepressed = function(x, y, button)
     PHASES[STATE.currentPhase].mousepressed(x, y, button)
+    Gui_manager.mousepressed(x, y, button)
     
-    for _, gui in ipairs(STATE.activeGuis) do
-        gui:mousepress(x, y, button)
+    if (button == 2) then
+        CAMERA.oldX = x
+        CAMERA.oldY = y
     end
-
 
 
 end
 love.mousereleased = function(x, y, button)
-    for _, gui in ipairs(STATE.activeGuis) do
-        gui:mouserelease(x, y, button)
+    Gui_manager.mousereleased(x, y, button)
+
+    if (button == 2) then
+        CAMERA.oldX = -1
+        CAMERA.oldY = -1
     end
+    
 end
 love.wheelmoved = function(x, y)
-    for _, gui in ipairs(STATE.activeGuis) do
-        gui:mousewheel(x, y)
-    end
+    Gui_manager.wheelmoved(x, y)
+
+    
 end

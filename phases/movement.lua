@@ -54,7 +54,7 @@ local function validateNewTile(tile)
 
     -- Don't disobey max moves!
     -- Move plan also include first tile, so subtract by 1 to correct
-    if #State.selectedMovePlan-1 == (State.selectedUnit.movement.maxMoves - State.selectedUnit.movement.movesMade) then return false end
+    if #State.selectedMovePlan-1 == (State.selectedUnit.movement.max_moves - State.selectedUnit.movement.moves_made) then return false end
 
     -- If the tile has an ally unit in it
     -- And the tile the unit is moving from is free
@@ -79,7 +79,7 @@ local function validateMovePlan()
             
             local switch_unit = last_tile.occupant
             local second_last_tile = State.selectedMovePlan[#State.selectedMovePlan-1]
-            if switch_unit.movement.movesMade == switch_unit.movement.maxMoves then return false end
+            if switch_unit.movement.moves_made == switch_unit.movement.max_moves then return false end
             if second_last_tile.occupant ~= nil and second_last_tile.occupant ~= State.selectedUnit then return false end
             
             -- Switch units! Well, kinda
@@ -93,7 +93,7 @@ local function validateMovePlan()
             
             updateUnitPositon(switch_unit, second_last_tile.coords)
 
-            switch_unit.movement.movesMade = switch_unit.movement.movesMade + 1
+            switch_unit.movement.moves_made = switch_unit.movement.moves_made + 1
 
 
         end
@@ -138,7 +138,7 @@ function phase_movement.update(dt)
 
             
             if validateMovePlan() then
-                State.selectedUnit.movement.movesMade = State.selectedUnit.movement.movesMade + #State.selectedMovePlan-1
+                State.selectedUnit.movement.moves_made = State.selectedUnit.movement.moves_made + #State.selectedMovePlan-1
             
                 updateUnitPositon(
                     State.selectedUnit,

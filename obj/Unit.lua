@@ -3,32 +3,8 @@ local HL_convert = Hexlib.coordConversions
 
 local phase_movement = require ("phases.movement")
 
----@enum unit_type
----| "levies"
----| "infantry"
----| "archers"
----| "cavalry"
----| "flying"
----| "war machine"
 
----@class unit
----@field type unit_type The type of the unit
----@field siex integer The size of the unit
----@field occupiedTileCoords coords_axial
----@field controller player
----@field flyingTimer number
-
----@type unit
 local Unit = {}
-
-Unit.unit_types = {
-    LEVIES = "levies",
-    INFANTRY = "infantry",
-    ARCHERS = "archers",
-    CAVALRY = "cavalry",
-    FLYING = "flying"
-}
-local unit_types = Unit.unit_types
 
 Unit.unit_attributes = {
     levies = { max_moves = 1},
@@ -39,9 +15,8 @@ Unit.unit_attributes = {
 }
 
 
-
 ---@param player player The player who controls this unit
----@param type unit_type Which type of unit
+---@param type unit_types Which type of unit
 ---@param axialCoord coords_axial The coordinates of the hex this unit inhabits
 ---@param size integer The size of the unit
 ---@return unit Unit 
@@ -50,7 +25,7 @@ function Unit:New(player, type, axialCoord, size)
 
     ---@type unit
     local u = {
-        type = type or unit_types.INFANTRY,
+        type = type or UNIT_TYPES.INFANTRY,
         occupiedTileCoords = axialCoord,
         size = size or 5,
 
@@ -59,12 +34,12 @@ function Unit:New(player, type, axialCoord, size)
         flyingTimer = 0,
 
         movement = {
-            maxMoves = Unit.unit_attributes[type or unit_types.INFANTRY].max_moves,
-            movesMade = 0
+            max_moves = Unit.unit_attributes[type or UNIT_TYPES.INFANTRY].max_moves,
+            moves_made = 0
         },
 
         tactics = {
-            chosenTactic = tactics.NONE,
+            chosen_tactic = tactics.NONE,
             target = nil,
         }
 
@@ -80,13 +55,12 @@ end
 
 function Unit:draw(mapAttr)
 
-    local mapAttr = mapAttr or MAPATTRIBUTES
-
+    mapAttr = mapAttr or MAPATTRIBUTES
 
     local bottomcenterXY = HL_convert.axialToWorld( self.occupiedTileCoords, mapAttr )
 
     local flyingOffsetY = 0
-    if self.type == unit_types.FLYING then
+    if self.type == UNIT_TYPES.FLYING then
         flyingOffsetY = 20 + math.sin(self.flyingTimer*2) * 5
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.circle("fill", bottomcenterXY.x, bottomcenterXY.y, flyingOffsetY)
@@ -100,7 +74,7 @@ function Unit:draw(mapAttr)
 
     if STATE.currentPhase == game_phases.MOVEMENT then
         if phase_movement.state.actingPlayer == self.controller then
-            if self.movement.movesMade < self.movement.maxMoves then
+            if self.movement.moves_made < self.movement.max_moves then
                 love.graphics.setColor(1, 0, 0)
                 love.graphics.circle("line", bottomcenterXY.x, bottomcenterXY.y, 30)
             end
@@ -114,13 +88,13 @@ function Unit:__tostring()
 end
 
 
-function Unit:movement_refreshMovement()
+function Unit:movement_refresh()
     self.movement.destinationCoords = self.occupiedTileCoords
-    self.movement.movesMade = 0
+    self.movement.moves_made = 0
 end
 
 function Unit:tactics_refresh()
-    self.tactics.chosenTactic = tactics.NONE
+    self.tactics.chosen_tactic = tactics.NONE
     self.tactics.target = nil
 end
 
