@@ -89,6 +89,10 @@ PHASES[game_phases.TACTICS] = require("phases.tactics")
 
 Gui_manager = require("lib.guimanager")
 
+Gui_manager.register_gui("movement", require("ui.ui_movement") )
+Gui_manager.register_gui("tactics", require("ui.ui_tactics") )
+
+
 love.mouse.custom_getXYWithOffset = function()
     return {x=love.mouse.getX() - CAMERA.offsetX, y=love.mouse.getY() - CAMERA.offsetY}
 end
@@ -205,6 +209,7 @@ function love.update(dt)
         CAMERA.oldX = newX
         CAMERA.oldY = newY
     end
+
 
 end
 

@@ -38,47 +38,44 @@ end
 
 function phase_tactics.mousepressed(x, y, button)
 
-    local selectedUnit = State.selected_unit
-
     local clickedTile = Hexfield.getTileFromWorldCoords(love.mouse.custom_getXYWithOffset())
     if clickedTile == nil then return end
     if clickedTile.occupant == nil then return end
 
+
     if State.selected_unit == nil then
 
         if clickedTile.occupant.controller == PLAYERS[State.actingPlayerIndex] then
-            State.selected_unit = clickedTile.occupant
-
-            Gui_manager.add_gui("tactics_unit", {unit=clickedTile.occupant})
+            phase_tactics.state.selected_unit = clickedTile.occupant
 
         end
     
-    elseif selectedUnit ~= nil then
+    elseif State.selected_unit ~= nil then
 
-        if clickedTile.occupant == selectedUnit then return end
+
+
+        if clickedTile.occupant == State.selected_unit then return end
 
         -- Update Unit Tactics State
-        selectedUnit.tactics.chosen_tactic = State.currentlyDeciding
-        selectedUnit.tactics.target = clickedTile.occupant
+        State.selected_unit.tactics.chosen_tactic = State.currentlyDeciding
+        State.selected_unit.tactics.target = clickedTile.occupant
 
         -- Update State
         State.selected_unit = nil
         State.currentlyDeciding = nil
-        STATE.activeGuis = {gui_tactics}
 
-    
     end
 
 end
 
 function phase_tactics.draw()
 
-    local selectedUnit = State.selected_unit
+    local selected_unit = State.selected_unit
 
-    if selectedUnit ~= nil then
+    if selected_unit ~= nil then
     
-        local selectedUnitXY = HL_convert.axialToWorld(selectedUnit.occupiedTileCoords)
-        love.graphics.circle("line", selectedUnitXY.x, selectedUnitXY.y, MAPATTRIBUTES.hexHeight/2)
+        local selected_unitXY = HL_convert.axialToWorld(selected_unit.occupiedTileCoords)
+        love.graphics.circle("line", selected_unitXY.x, selected_unitXY.y, MAPATTRIBUTES.hexHeight/2)
 
     end
 
