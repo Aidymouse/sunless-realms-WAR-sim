@@ -86,6 +86,7 @@ PLAYERS = {
 PHASES = {}
 PHASES[game_phases.MOVEMENT] = require("phases.movement")
 PHASES[game_phases.TACTICS] = require("phases.tactics")
+PHASES[game_phases.ACTION] = require("phases.action")
 
 Gui_manager = require("lib.guimanager")
 
@@ -139,8 +140,26 @@ function changePhase(newPhase)
 
     elseif newPhase == game_phases.ACTION then
 
+        for _, player in ipairs(PLAYERS) do
+
+            for _, unit in ipairs(player.units) do
+                unit:action_refresh()
+            end
+
+        end
+
+
+        
+        PHASES[game_phases.ACTION].populate_statuses()
+        PHASES[game_phases.ACTION].calculate_helpers_and_hinderers()
+        PHASES[game_phases.ACTION].handle_fights()
+        PHASES[game_phases.ACTION].cleanup_dead_units()
+
+
 
         changePhase(game_phases.MOVEMENT)
+
+        --STATE.currentPhase = game_phases.ACTION
 
     end
 
@@ -148,7 +167,6 @@ end
 
 local function random_unit_type()
 
-    local unit = love.math.random(1, 6)
     local units_map = {
         UNIT_TYPES.LEVIES,
         UNIT_TYPES.INFANTRY,
@@ -158,7 +176,7 @@ local function random_unit_type()
         UNIT_TYPES.WARMACHINE,
     }
 
-    return units_map[unit]
+    return units_map[love.math.random(1, #units_map)]
 
 end
 

@@ -146,6 +146,7 @@ function Hexlib.coords.xy:New(x, y)
     self.__index = self
     self.__tostring = function(self) return "[XY]<"..self.x..":"..self.y..">" end
     self.__eq = function(me, you) return me.x == you.x and me.y == you.r end
+    return o
 end
 
 

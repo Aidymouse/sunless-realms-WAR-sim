@@ -7,12 +7,12 @@ local phase_movement = require ("phases.movement")
 local Unit = {}
 
 Unit.unit_attributes = {
-    levies = { max_moves = 1},
-    infantry = { max_moves = 1},
-    archers = { max_moves = 1 },
-    cavalry = { max_moves = 2 },
-    flying = { max_moves = 2 },
-    warmachine = { max_moves = 1 },
+    levies = { max_moves = 1, attack_range=1},
+    infantry = { max_moves = 1, attack_range=1},
+    archers = { max_moves = 1, attack_range=2 },
+    cavalry = { max_moves = 2, attack_range=1 },
+    flying = { max_moves = 2, attack_range=2 },
+    warmachine = { max_moves = 1, attack_range=4 },
 }
 
 
@@ -29,6 +29,9 @@ function Unit:New(player, type, axialCoord, size)
         type = type or UNIT_TYPES.INFANTRY,
         occupiedTileCoords = axialCoord,
         size = size or 5,
+        attack_range = Unit.unit_attributes[type].attack_range,
+
+        attack_value = size or 5,
 
         controller = player,
 
@@ -42,6 +45,10 @@ function Unit:New(player, type, axialCoord, size)
         tactics = {
             chosen_tactic = tactics.NONE,
             target = nil,
+        },
+
+        action = {
+            has_fought = false
         }
 
     }
@@ -197,6 +204,10 @@ end
 function Unit:tactics_refresh()
     self.tactics.chosen_tactic = tactics.NONE
     self.tactics.target = nil
+end
+
+function Unit:action_refresh()
+    self.action.has_fought = false
 end
 
 return Unit

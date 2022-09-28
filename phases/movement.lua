@@ -204,14 +204,6 @@ function phase_movement.draw()
 
 end
 
-local function tileIsValidMoveSpot(tile)
-
-    if tile.occupant == nil then return true end
-    if tile.occupant.controller == PLAYERS[State.actingPlayerIndex] then return true end
-    return false
-
-end
-
 
 
 return phase_movement

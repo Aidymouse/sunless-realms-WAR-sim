@@ -24,8 +24,6 @@ local phase_tactics = {
 
 local State = phase_tactics.state
 
-local function update_gui_button_coordinates(unit)
-end
 
 function phase_tactics.refresh()
     State.selected_unit = nil -- Type: unit
@@ -57,6 +55,20 @@ function phase_tactics.mousepressed(x, y, button)
 
         -- Validate chosen tactic 
 
+        ---@type tactics
+        local cur_tactic = State.currentlyDeciding
+
+        ---@type unit
+        local selected_unit = State.selected_unit
+
+        local tdist = Hexlib.axial_distance(clickedTile.coords, selected_unit.occupiedTileCoords)
+        --print(tdist)
+        if tdist > State.selected_unit.attack_range then return end
+        
+        if cur_tactic == TACTICS.FIGHT then
+
+            
+        end
         -- Must be within attack range
         -- Archers cannot help
 
