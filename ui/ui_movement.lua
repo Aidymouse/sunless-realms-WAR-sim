@@ -70,10 +70,10 @@ function gui_movement.match_state()
 
     end
 
-    if State.actingPlayerIndex == #PLAYERS then
-        nextButton.label = "Next phase"
-    else
+    if #State.playersWhoHaveMoved < #PLAYERS-1 then
         nextButton.label = "Next player"
+    else
+        nextButton.label = "Next phase"
     end
 
 end

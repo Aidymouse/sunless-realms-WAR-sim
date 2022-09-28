@@ -1,7 +1,6 @@
 local Hexlib = require("lib.hexlib")
 local HL_convert = Hexlib.coordConversions
 
-local phase_movement = require ("phases.movement")
 
 
 local Unit = {}
@@ -175,19 +174,9 @@ function Unit:draw(mapAttr)
 
     love.graphics.polygon("fill", unit_path )
 
-    
+
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print(self.size, bottomcenterXY.x-3, bottomcenterXY.y-25-6-flyingOffsetY)
-
-
-    if STATE.currentPhase == game_phases.MOVEMENT then
-        if phase_movement.state.actingPlayer == self.controller then
-            if self.movement.moves_made < self.movement.max_moves then
-                love.graphics.setColor(1, 0, 0)
-                love.graphics.circle("line", bottomcenterXY.x, bottomcenterXY.y, 30)
-            end
-        end
-    end
 
 end
 

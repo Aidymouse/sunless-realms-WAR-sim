@@ -32,7 +32,8 @@ local phase_action = {
         target_helper_lines = {},
         target_hinder_lines = {},
 
-        player_who_scored_first_casualty = nil
+
+        casualty_counts = {}
     },
 
 
@@ -44,7 +45,50 @@ function phase_action.refresh()
     phase_action.actions = {}
     State.current_action = nil
     State.player_who_scored_first_casualty = nil
+
+    for _, player in ipairs(PLAYERS) do
+        State.casualty_counts[player] = 0
+    end
 end
+
+local function cleanup_dead_units()
+    for _, player in ipairs(PLAYERS) do
+        for _, unit in ipairs(player.units) do
+            if unit.size <= 0 then
+
+                local occupied_tile_id = tostring(unit.occupiedTileCoords)
+                local occupied_tile = Hexfield.tiles[occupied_tile_id]
+                occupied_tile.occupant = nil
+
+                Utils.remove_item_from_table(player.units, unit)
+
+
+            end
+        end
+    end
+
+end
+
+
+local function end_phase()
+    cleanup_dead_units()
+
+    -- Find player who scored most casualties this round
+    local player_with_highest_count = PLAYERS[1]
+    local all_same = true
+    for player, count in pairs(State.casualty_counts) do
+        if count > State.casualty_counts[player_with_highest_count] then
+            player_with_highest_count = player
+            all_same = false
+        end
+    end
+    STATE.player_with_tactical_advantage = player_with_highest_count
+    if all_same then STATE.player_with_tactical_advantage = Utils.get_random_from_list(PLAYERS) end
+
+    changePhase(game_phases.ROUNDSTART)
+
+end
+
 
 function phase_action.populate_statuses()
     State.unit_statuses = {}
@@ -149,23 +193,7 @@ local function calculate_fight(unit1, unit2)
 end
 
 
-local function cleanup_dead_units()
-    for _, player in ipairs(PLAYERS) do
-        for _, unit in ipairs(player.units) do
-            if unit.size <= 0 then
 
-                local occupied_tile_id = tostring(unit.occupiedTileCoords)
-                local occupied_tile = Hexfield.tiles[occupied_tile_id]
-                occupied_tile.occupant = nil
-
-                Utils.remove_item_from_table(player.units, unit)
-            
-
-            end
-        end
-    end
-
-end
 
 function phase_action.mousepressed(x, y, button)
     --time_multiplier = 5
@@ -308,6 +336,7 @@ function phase_action.handle_fights()
 
                         add_action(function()
                                 target.size = target.size - 1
+                                State.casualty_counts[unit.controller] = State.casualty_counts[unit.controller] + 1
                                 new_message(-1, target_coords.x, target_coords.y-MESSAGE_OFFSET_HEIGHT)
                         end, DELAY, "Decrement Target Size")
                         
@@ -317,7 +346,8 @@ function phase_action.handle_fights()
                         
                         add_action(function()
                                 unit.size = unit.size - 1
-                                new_message(-1, unit_coords.x, unit_coords.y)
+                                State.casualty_counts[target.controller] = State.casualty_counts[target.controller] + 1
+                                new_message(-1, unit_coords.x, unit_coords.y-MESSAGE_OFFSET_HEIGHT)
                         end, DELAY, "Decrement Unit Size")
 
                         --print("Winner: "..tostring(target).."\n")
@@ -358,11 +388,7 @@ function phase_action.handle_fights()
 
 end
 
-local function end_phase()
-    cleanup_dead_units()
 
-    changePhase(game_phases.MOVEMENT)
-end
 
 function phase_action.update(dt)
 
@@ -427,9 +453,18 @@ function phase_action.draw()
     
         love.graphics.print(tostring(State.delay_timer), 0, love.graphics.getHeight()-48)
 
+        local i = 0
+        for player, count in pairs(State.casualty_counts) do
+            love.graphics.print(player.name..": "..count.." casualties", 300, i*16)
+            i = i + 1
+        end
+
+        --[[ Print Action Queue
         for index, action in ipairs(State.action_queue) do
             love.graphics.print(action.description, 500, index*16)
         end
+        ]]
+
 
     love.graphics.translate(CAMERA.offsetX, CAMERA.offsetY)
 

@@ -4,6 +4,8 @@ local Hexlib = require("lib.hexlib")
 local HL_convert = Hexlib.coordConversions
 local HL_coords = Hexlib.coords
 
+local Utils = require("lib.utils")
+
 local phase_movement = {
     state = {
 
@@ -34,6 +36,8 @@ function phase_movement.refresh()
     State.actingPlayer = PLAYERS[State.actingPlayerIndex]
 
     State.player_deciding_to_go_first = STATE.player_with_tactical_advantage
+    if State.player_deciding_to_go_first == nil then
+        State.player_deciding_to_go_first = Utils.get_random_from_list(PLAYERS) end
 end
 
 
@@ -164,6 +168,7 @@ end
 function phase_movement.mousepressed(x, y, button)
     
     if button ~= 1 then return end
+    if State.player_deciding_to_go_first ~= nil then return end
 
     local clicked_tile = Hexfield.getTileFromWorldCoords(love.mouse.custom_getXYWithOffset())
     if clicked_tile == nil then return end
@@ -182,7 +187,7 @@ end
 function phase_movement.draw()
 
     -- Draw Move Plan
-
+    love.graphics.setColor(1, 1, 1)
     if State.selectedMovePlan ~= nil then
         
         local moveplan = State.selectedMovePlan
@@ -199,8 +204,24 @@ function phase_movement.draw()
 
     end
 
+    -- Draw circles around units who have not finished moving
+    if State.player_deciding_to_go_first == nil then
+        love.graphics.setColor(1, 0, 0)
+        for _, unit in ipairs(State.actingPlayer.units) do
+            if unit.movement.moves_made < unit.movement.max_moves then
+                local bottom_center_XY = HL_convert.axialToWorld(unit.occupiedTileCoords, MAPATTRIBUTES)
+
+                love.graphics.circle("line", bottom_center_XY.x, bottom_center_XY.y, 30)
+            end
+        end
+    end
+
 
     love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
+
+    if State.player_deciding_to_go_first ~= nil then
+        love.graphics.print("Deciding for "..State.player_deciding_to_go_first.name, 150, 16*2)
+    end
 
     for i, tile in ipairs(State.selectedMovePlan) do
         love.graphics.print(tostring(tile.coords), 500, i*16)

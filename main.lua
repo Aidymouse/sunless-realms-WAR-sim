@@ -6,6 +6,9 @@ require("definitions.hexfield")
 require("definitions.unit")
 require("definitions.action")
 
+---TODO
+-- Range limit helping
+-- Better transform for screen space to world space
 
 -- Global Config
 MAP_SIZE = 8
@@ -15,6 +18,8 @@ MAP_SIZE = 8
 local Hexlib = require("lib.hexlib")
 local HL_coords = Hexlib.coords
 local HL_convert = Hexlib.coordConversions
+
+local Utils = require("lib.utils")
 
 -- Global State Stuff, probs a bad idea
 ---@alias map_attributes {hexWidth: number, hexHeight: number, orientation: hex_orientation}
@@ -37,6 +42,7 @@ CAMERA = {
 
 -- ENUMS
 game_phases = {
+    ROUNDSTART = "round start",
     MOVEMENT = "movement",
     TACTICS = "tactics",
     ACTION = "action"
@@ -57,6 +63,8 @@ tactics = {
 -- State
 STATE = {
     currentPhase = game_phases.MOVEMENT,
+
+    eliminated_players = {}
 
 }
 
@@ -82,6 +90,7 @@ PLAYERS = {
 }
 
 PHASES = {}
+PHASES[game_phases.ROUNDSTART] = require("phases.roundstart")
 PHASES[game_phases.MOVEMENT] = require("phases.movement")
 PHASES[game_phases.TACTICS] = require("phases.tactics")
 PHASES[game_phases.ACTION] = require("phases.action")
@@ -108,11 +117,28 @@ local Units = require("obj.Unit")
 
 function changePhase(newPhase)
 
-    if newPhase == game_phases.MOVEMENT then
-        
-        if PHASES[game_phases.ACTION].state.player_who_scored_first_casualty ~= nil then
-            STATE.player_with_tactical_advantage = PHASES[game_phases.ACTION].state.player_who_scored_first_casualty
+    if newPhase == game_phases.ROUNDSTART then
+
+        for _, player in ipairs(PLAYERS) do
+            if #player.units == 0 then
+                table.insert(STATE.eliminated_players, player)
+            end
         end
+
+        if #STATE.eliminated_players == #PLAYERS-1 then
+            print("One player left!")
+            for _, player in ipairs(PLAYERS) do
+                if Utils.indexOf(STATE.eliminated_players, player) == -1 then
+                    PHASES[game_phases.ROUNDSTART].state.winning_player = player
+                    STATE.currentPhase = game_phases.ROUNDSTART
+                    return
+                end
+            end
+        end
+
+        changePhase(game_phases.MOVEMENT)
+
+    elseif newPhase == game_phases.MOVEMENT then
         
         -- Refresh all units
         for _, player in ipairs(PLAYERS) do
@@ -161,7 +187,7 @@ function changePhase(newPhase)
         PHASES[game_phases.ACTION].calculate_helpers_and_hinderers()
         PHASES[game_phases.ACTION].handle_fights()
 
-
+        Gui_manager.clear_guis()
         STATE.currentPhase = game_phases.ACTION
 
 
@@ -191,12 +217,12 @@ end
 
 local function populateRandomUnits()
 
-    local num_units = love.math.random(1, 6)
+    local num_units = 1--love.math.random(1, 6)
 
     for _, player in ipairs(PLAYERS) do
         local unitCounter = 1
 
-        for _ = 0, num_units, 1 do
+        for _ = 1, num_units, 1 do
             local randomCoords = HL_coords.axial:New(love.math.random(MAP_SIZE), love.math.random(MAP_SIZE))
 
             while Hexfield.tiles[tostring(randomCoords)].occupant ~= nil do

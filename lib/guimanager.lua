@@ -13,6 +13,10 @@ Gui_manager.GUIS = {
 
 }
 
+function Gui_manager.clear_guis()
+    Gui_manager.active_guis = {}
+end
+
 function Gui_manager.register_gui(gui_name, gui)
     Gui_manager.GUIS[gui_name] = gui
 end
