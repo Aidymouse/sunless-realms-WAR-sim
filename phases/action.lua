@@ -24,10 +24,10 @@ function phase_action.populate_statuses()
 end
 
 local function get_unit_status(unit)
-    if #State.unit_statuses[unit].hindered_by < #State.unit_statuses[unit].helped_by then return "helped"
-    elseif #State.unit_statuses[unit].hindered_by > #State.unit_statuses[unit].helped_by then return "hindered"
+    if #State.unit_statuses[unit].hindered_by < #State.unit_statuses[unit].helped_by then return 3 -- hlped
+    elseif #State.unit_statuses[unit].hindered_by > #State.unit_statuses[unit].helped_by then return 1 --hindered
     end
-    return "normal"
+    return 2 -- normal
 end
 
 function phase_action.calculate_helpers_and_hinderers()
@@ -96,7 +96,7 @@ function phase_action.cleanup_dead_units()
                 local occupied_tile_id = tostring(unit.occupiedTileCoords)
                 local occupied_tile = Hexfield.tiles[occupied_tile_id]
                 occupied_tile.occupant = nil
-                
+
                 Utils.remove_item_from_table(player.units, unit)
             
 
@@ -127,11 +127,16 @@ function phase_action.handle_fights()
 
                 print(tostring(unit)..": "..unit_status.." -> "..tostring(target)..": "..target_status)
 
-                local fight_winner = calculate_fight(unit, target)
+                local fight_winner
+
+                if target_status > unit_status then fight_winner = target
+                elseif target_status < unit_status then fight_winner = unit
+                else fight_winner = calculate_fight(unit, target) end
 
                 -- You can't inflict casualties if you're not within attack range of the target
                 -- In other words, if the attack range of the winner is lower than the distance between fighters, no casualties should occur
                 local in_range = Hexlib.axial_distance(unit.occupiedTileCoords, target.occupiedTileCoords) <= fight_winner.attack_range
+
 
 
                 if fight_winner ~= "tie" then
