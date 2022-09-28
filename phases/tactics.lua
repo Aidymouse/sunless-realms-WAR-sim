@@ -52,9 +52,13 @@ function phase_tactics.mousepressed(x, y, button)
     
     elseif State.selected_unit ~= nil then
 
-
-
+        if State.currentlyDeciding == nil then return end
         if clickedTile.occupant == State.selected_unit then return end
+
+        -- Validate chosen tactic 
+
+        -- Must be within attack range
+        -- Archers cannot help
 
         -- Update Unit Tactics State
         State.selected_unit.tactics.chosen_tactic = State.currentlyDeciding

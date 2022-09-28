@@ -117,8 +117,6 @@ function changePhase(newPhase)
 
         end
 
-        Hexfield.movement_refresh()
-
         PHASES[game_phases.MOVEMENT].refresh()
 
         Gui_manager.set_gui("movement")
@@ -148,6 +146,22 @@ function changePhase(newPhase)
 
 end
 
+local function random_unit_type()
+
+    local unit = love.math.random(1, 6)
+    local units_map = {
+        UNIT_TYPES.LEVIES,
+        UNIT_TYPES.INFANTRY,
+        UNIT_TYPES.ARCHERS,
+        UNIT_TYPES.CAVALRY,
+        UNIT_TYPES.FLYING,
+        UNIT_TYPES.WARMACHINE,
+    }
+
+    return units_map[unit]
+
+end
+
 local function populateRandomUnits()
 
     for _, player in ipairs(PLAYERS) do
@@ -157,7 +171,7 @@ local function populateRandomUnits()
             local randomCoords = HL_coords.axial:New(love.math.random(4), love.math.random(4))
 
             if Hexfield.tiles[tostring(randomCoords)].occupant == nil then
-                local newUnit = Units:New(player, UNIT_TYPES.INFANTRY, randomCoords, unitCounter)
+                local newUnit = Units:New(player, random_unit_type(), randomCoords, unitCounter)
                 table.insert(player.units, newUnit)
                 Hexfield.tiles[tostring(randomCoords)].occupant = newUnit
                 unitCounter = unitCounter+1

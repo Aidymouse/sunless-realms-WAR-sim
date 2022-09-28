@@ -43,7 +43,7 @@ button_done.click = function()
 end
 
 
-
+---@param selected_unit unit The unit to draw buttons near
 local function updateButtonCoords(selected_unit)
 
     local bottomCenterXY = HL_convert.axialToWorld(selected_unit.occupiedTileCoords)
@@ -68,10 +68,17 @@ function gui_tactics.match_state()
 
     if phase_tactics.state.selected_unit ~= nil then
 
+        ---@type unit
+        local cur_unit = phase_tactics.state.selected_unit
+        
         updateButtonCoords(phase_tactics.state.selected_unit)
 
         button_done:show()
-        button_help:show()
+
+        if cur_unit.type ~= UNIT_TYPES.ARCHERS then
+            button_help:show()
+        end
+        
         button_hinder:show()
         button_fight:show()
     else

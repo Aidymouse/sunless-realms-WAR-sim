@@ -5,18 +5,14 @@ local HL_convert = hexlib.coordConversions
 local HL_coords = hexlib.coords
 
 
-terrain = {
-    PLAINS = "plains",
-    SWAMP = "swamp",
-    WATER = "water"
-}
+
 
 terrainAttributes = {}
 
 terrainAttributes[""] = {color={1, 1, 1} }
-terrainAttributes[terrain.PLAINS] = { color = { 201/255, 1, 115/255 } }
-terrainAttributes[terrain.SWAMP] = {color={0, 0.4, 0}}
-terrainAttributes[terrain.WATER] = {color={0.6, 0.6, 1}}
+terrainAttributes[TERRAIN.PLAINS] = { color = { 201/255, 1, 115/255 } }
+terrainAttributes[TERRAIN.SWAMP] = {color={0, 0.4, 0}}
+terrainAttributes[TERRAIN.WATER] = {color={0.6, 0.6, 1}}
 
 Hexfield = {
     tiles = {
@@ -103,14 +99,6 @@ function Hexfield.draw()
 
 end
 
-function Hexfield.movement_refresh()
-
-    for id, tile in pairs(Hexfield.tiles) do
-        --tile.movement.effectiveOccupant = tile.occupant
-    end
-
-end
-
 local function populate()
 
     for q=0, 8, 1 do
@@ -120,14 +108,14 @@ local function populate()
 
             local newTile = {
                 coords = newCoords,
-                terrain=terrain.PLAINS,
+                terrain=TERRAIN.PLAINS,
                 occupant=nil,
             }
             
             Hexfield.tiles[ tostring(newCoords) ] = newTile
 
             if love.math.random(1, 3) == 1 then
-                newTile.terrain = terrain.SWAMP
+                newTile.terrain = TERRAIN.SWAMP
             end
         end
     end

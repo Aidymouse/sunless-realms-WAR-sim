@@ -12,6 +12,7 @@ Unit.unit_attributes = {
     archers = { max_moves = 1 },
     cavalry = { max_moves = 2 },
     flying = { max_moves = 2 },
+    warmachine = { max_moves = 1 },
 }
 
 
@@ -49,10 +50,103 @@ function Unit:New(player, type, axialCoord, size)
     return u
 end
 
+---@param dt number The time that has passed since last frame
 function Unit:update(dt)
     self.flyingTimer = self.flyingTimer + dt
 end
 
+
+---@param unit_type unit_types Type of the unit
+---@param bottom_center_XY coords_XY The X and Y of the point at which the unit touches the "ground"
+---@return number[] path The shape path for the unit
+local function get_unit_shape_polygon(unit_type, bottom_center_XY)
+
+    if unit_type == UNIT_TYPES.LEVIES then
+        local size = 35
+        local corner = 7
+        return {
+            bottom_center_XY.x - (size/2 - corner), bottom_center_XY.y,
+            bottom_center_XY.x - size/2, bottom_center_XY.y - corner,
+            bottom_center_XY.x - size/2, bottom_center_XY.y - (size - corner),
+            bottom_center_XY.x - (size/2 - corner), bottom_center_XY.y - size,
+            bottom_center_XY.x + (size/2 - corner), bottom_center_XY.y - size,
+            bottom_center_XY.x + size/2, bottom_center_XY.y - (size - corner),
+            bottom_center_XY.x + size/2, bottom_center_XY.y - corner,
+            bottom_center_XY.x + (size/2 - corner), bottom_center_XY.y,
+        }
+
+    elseif unit_type == UNIT_TYPES.INFANTRY then
+        return {
+            bottom_center_XY.x - 25, bottom_center_XY.y,
+            bottom_center_XY.x - 25, bottom_center_XY.y-50,
+            bottom_center_XY.x + 25, bottom_center_XY.y-50,
+            bottom_center_XY.x + 25, bottom_center_XY.y,
+        }
+    
+    elseif unit_type == UNIT_TYPES.ARCHERS then
+        return {
+            bottom_center_XY.x-25, bottom_center_XY.y,
+            bottom_center_XY.x, bottom_center_XY.y-50,
+            bottom_center_XY.x+25, bottom_center_XY.y
+        }
+    
+    elseif unit_type == UNIT_TYPES.CAVALRY then
+        
+        local size = 30
+        local spike_length = 20
+
+        return {
+            bottom_center_XY.x - size / 2, bottom_center_XY.y,
+            bottom_center_XY.x - size / 2-spike_length, bottom_center_XY.y-size/2,
+            bottom_center_XY.x - size / 2, bottom_center_XY.y - size,
+            bottom_center_XY.x, bottom_center_XY.y - size - spike_length,
+            bottom_center_XY.x + size / 2, bottom_center_XY.y - size,
+            bottom_center_XY.x+size/2+spike_length, bottom_center_XY.y - size/2,
+            bottom_center_XY.x + size / 2, bottom_center_XY.y,
+        }
+
+    elseif unit_type == UNIT_TYPES.FLYING then
+        return {
+            bottom_center_XY.x, bottom_center_XY.y,
+            bottom_center_XY.x-25, bottom_center_XY.y-25,
+            bottom_center_XY.x, bottom_center_XY.y-50,
+            bottom_center_XY.x+25, bottom_center_XY.y-25,
+        }
+    
+    elseif unit_type == UNIT_TYPES.WARMACHINE then
+        return {
+            bottom_center_XY.x, bottom_center_XY.y,
+            bottom_center_XY.x - 25, bottom_center_XY.y - 47,
+            bottom_center_XY.x-22, bottom_center_XY.y - 50,
+            bottom_center_XY.x + 25, bottom_center_XY.y - 41,
+            bottom_center_XY.x + 25, bottom_center_XY.y - 25,
+            bottom_center_XY.x + 25, bottom_center_XY.y - 12,
+        }
+
+
+    end
+
+    return {
+        bottom_center_XY.x - 25, bottom_center_XY.y,
+        bottom_center_XY.x - 25, bottom_center_XY.y-50,
+        bottom_center_XY.x + 25, bottom_center_XY.y-50,
+        bottom_center_XY.x + 25, bottom_center_XY.y,
+    }
+
+end
+
+local function offsetPath(path, offsetX, offsetY)
+    local new_path = {}
+
+    for i=1, #path, 2 do
+        table.insert(new_path, path[i]+offsetX)
+        table.insert(new_path, path[i+1]+offsetY)
+    end
+
+    return new_path
+end
+
+---@param mapAttr map_attributes
 function Unit:draw(mapAttr)
 
     mapAttr = mapAttr or MAPATTRIBUTES
@@ -63,11 +157,17 @@ function Unit:draw(mapAttr)
     if self.type == UNIT_TYPES.FLYING then
         flyingOffsetY = 20 + math.sin(self.flyingTimer*2) * 5
         love.graphics.setColor(0, 0, 0, 0.5)
-        love.graphics.circle("fill", bottomcenterXY.x, bottomcenterXY.y, flyingOffsetY)
+        love.graphics.circle("fill", bottomcenterXY.x, bottomcenterXY.y, 50-flyingOffsetY)
     end
 
     love.graphics.setColor(self.controller.color)
-    love.graphics.rectangle("fill", bottomcenterXY.x - 25, bottomcenterXY.y-50-flyingOffsetY, 50, 50)
+    
+    local unit_path = get_unit_shape_polygon(self.type, bottomcenterXY)
+    if self.type == UNIT_TYPES.FLYING then unit_path = offsetPath(unit_path, 0, -flyingOffsetY) end
+
+    love.graphics.polygon("fill", unit_path )
+
+    
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print(self.size, bottomcenterXY.x-3, bottomcenterXY.y-25-6-flyingOffsetY)
 
@@ -83,6 +183,7 @@ function Unit:draw(mapAttr)
 
 end
 
+---@returns string
 function Unit:__tostring()
     return "UNIT ("..self.type..", "..self.size.." in "..tostring(self.occupiedTileCoords)..")"
 end

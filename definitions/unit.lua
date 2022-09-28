@@ -6,6 +6,10 @@
 ---@field flyingTimer number
 ---@field movement unit_movement
 ---@field tactics unit_tactics
+---@field draw function
+---@field update function<number>
+---@field movement_refresh function
+---@field tactics_refresh function
 
 ---@class unit_movement
 ---@field max_moves integer The amount of moves this unit can make
@@ -21,7 +25,8 @@ UNIT_TYPES = {
     INFANTRY = "infantry",
     ARCHERS = "archers",
     CAVALRY = "cavalry",
-    FLYING = "flying"
+    FLYING = "flying",
+    WARMACHINE = "warmachine",
 }
 
 ---@enum tactics
