@@ -45,7 +45,10 @@ end
 
 local function validateNewTile(tile)
 
+    
     if tile == nil then return false end
+    -- Prevent duplicate tiles 
+    if tile == State.selectedMovePlan[#State.selectedMovePlan] then return false end
 
     local from_tile = State.selectedMovePlan[#State.selectedMovePlan]
 
@@ -109,7 +112,7 @@ function phase_movement.update(dt)
     if State.selectedUnit ~= nil then
 
         if hoveredTile ~= latestMovePlanTile then
-            print("Hovered new tile")
+            --print("Hovered new tile")
 
 
             -- Reset move plan if hover over self tile
@@ -134,7 +137,7 @@ function phase_movement.update(dt)
 
         if not love.mouse.isDown(1) and State.selectedUnit ~= nil then
             -- Mouse has been let go
-            print("Dropped")
+            --print("Dropped")
 
             
             if validateMovePlan() then

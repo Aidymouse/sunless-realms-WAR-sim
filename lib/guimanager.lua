@@ -113,7 +113,7 @@ end
 
 function Gui_manager.wheelmoved(x, y)
     for _, gui_name in ipairs(Gui_manager.active_guis) do
-        Gui_manager.GUIS[gui_name]:mosuewheel(x, y)
+        Gui_manager.GUIS[gui_name]:mousewheel(x, y)
     end
 
 

@@ -7,12 +7,12 @@ local phase_movement = require ("phases.movement")
 local Unit = {}
 
 Unit.unit_attributes = {
-    levies = { max_moves = 1, attack_range=1},
-    infantry = { max_moves = 1, attack_range=1},
-    archers = { max_moves = 1, attack_range=2 },
-    cavalry = { max_moves = 2, attack_range=1 },
-    flying = { max_moves = 2, attack_range=2 },
-    warmachine = { max_moves = 1, attack_range=4 },
+    levies = { max_moves = 1, attack_range = 1},
+    infantry = { max_moves = 1, attack_range = 1},
+    archers = { max_moves = 1, attack_range = 2 },
+    cavalry = { max_moves = 2, attack_range = 1 },
+    flying = { max_moves = 2, attack_range = 2 },
+    warmachine = { max_moves = 1, attack_range = 4 },
 }
 
 
@@ -98,19 +98,16 @@ local function get_unit_shape_polygon(unit_type, bottom_center_XY)
         }
     
     elseif unit_type == UNIT_TYPES.CAVALRY then
-        
-        local size = 30
-        local spike_length = 20
-
         return {
-            bottom_center_XY.x - size / 2, bottom_center_XY.y,
-            bottom_center_XY.x - size / 2-spike_length, bottom_center_XY.y-size/2,
-            bottom_center_XY.x - size / 2, bottom_center_XY.y - size,
-            bottom_center_XY.x, bottom_center_XY.y - size - spike_length,
-            bottom_center_XY.x + size / 2, bottom_center_XY.y - size,
-            bottom_center_XY.x+size/2+spike_length, bottom_center_XY.y - size/2,
-            bottom_center_XY.x + size / 2, bottom_center_XY.y,
+            bottom_center_XY.x-15, bottom_center_XY.y-50,
+            bottom_center_XY.x, bottom_center_XY.y-50,
+            bottom_center_XY.x+25, bottom_center_XY.y-25,
+            bottom_center_XY.x+15, bottom_center_XY.y-10,
+            bottom_center_XY.x-5, bottom_center_XY.y-15,
+            bottom_center_XY.x, bottom_center_XY.y,
+            bottom_center_XY.x-25, bottom_center_XY.y,
         }
+        
 
     elseif unit_type == UNIT_TYPES.FLYING then
         return {
@@ -121,13 +118,17 @@ local function get_unit_shape_polygon(unit_type, bottom_center_XY)
         }
     
     elseif unit_type == UNIT_TYPES.WARMACHINE then
+        local size = 30
+        local spike_length = 20
+
         return {
-            bottom_center_XY.x, bottom_center_XY.y,
-            bottom_center_XY.x - 25, bottom_center_XY.y - 47,
-            bottom_center_XY.x-22, bottom_center_XY.y - 50,
-            bottom_center_XY.x + 25, bottom_center_XY.y - 41,
-            bottom_center_XY.x + 25, bottom_center_XY.y - 25,
-            bottom_center_XY.x + 25, bottom_center_XY.y - 12,
+            bottom_center_XY.x - size / 2, bottom_center_XY.y,
+            bottom_center_XY.x - size / 2 - spike_length, bottom_center_XY.y - size / 2,
+            bottom_center_XY.x - size / 2, bottom_center_XY.y - size,
+            bottom_center_XY.x, bottom_center_XY.y - size - spike_length,
+            bottom_center_XY.x + size / 2, bottom_center_XY.y - size,
+            bottom_center_XY.x + size / 2 + spike_length, bottom_center_XY.y - size / 2,
+            bottom_center_XY.x + size / 2, bottom_center_XY.y,
         }
 
 

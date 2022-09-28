@@ -62,13 +62,9 @@ function phase_tactics.mousepressed(x, y, button)
         local selected_unit = State.selected_unit
 
         local tdist = Hexlib.axial_distance(clickedTile.coords, selected_unit.occupiedTileCoords)
-        --print(tdist)
+
         if tdist > State.selected_unit.attack_range then return end
         
-        if cur_tactic == TACTICS.FIGHT then
-
-            
-        end
         -- Must be within attack range
         -- Archers cannot help
 

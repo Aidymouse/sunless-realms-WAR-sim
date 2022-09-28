@@ -4,6 +4,7 @@ require("definitions.coords")
 -- These ones are not useless, they have global enum defintions
 require("definitions.hexfield")
 require("definitions.unit")
+require("definitions.action")
 
 
 
@@ -150,14 +151,16 @@ function changePhase(newPhase)
 
 
         
+        PHASES[game_phases.ACTION].refresh()
+
         PHASES[game_phases.ACTION].populate_statuses()
         PHASES[game_phases.ACTION].calculate_helpers_and_hinderers()
         PHASES[game_phases.ACTION].handle_fights()
-        PHASES[game_phases.ACTION].cleanup_dead_units()
 
 
+        STATE.currentPhase = game_phases.ACTION
 
-        changePhase(game_phases.MOVEMENT)
+        --changePhase(game_phases.MOVEMENT)
 
         --STATE.currentPhase = game_phases.ACTION
 
