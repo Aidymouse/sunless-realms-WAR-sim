@@ -31,8 +31,10 @@ local phase_action = {
         current_fight_hinder_lines = {},
         target_helper_lines = {},
         target_hinder_lines = {},
+
+        player_who_scored_first_casualty = nil
     },
-    
+
 
 }
 
@@ -41,6 +43,7 @@ local State = phase_action.state
 function phase_action.refresh()
     phase_action.actions = {}
     State.current_action = nil
+    State.player_who_scored_first_casualty = nil
 end
 
 function phase_action.populate_statuses()
@@ -165,7 +168,7 @@ local function cleanup_dead_units()
 end
 
 function phase_action.mousepressed(x, y, button)
-    time_multiplier = 5
+    --time_multiplier = 5
 end
 
 function phase_action.handle_fights()
@@ -190,18 +193,15 @@ function phase_action.handle_fights()
 
                         State.current_fight_helper_lines = {}
                         State.current_fight_hinder_lines = {}
+                        State.target_hinder_lines = {}
+                        State.target_hinder_lines = {}
 
                         new_message("FIGHT", unit_coords.x, unit_coords.y-MESSAGE_OFFSET_HEIGHT)
                         new_message("FIGHT", target_coords.x, target_coords.y-MESSAGE_OFFSET_HEIGHT)
                 end, DELAY, "Fight Message")
 
 
-                local target_status = get_unit_status(target)
-                local unit_status = get_unit_status(unit)
-
-                State.current_fight_helper_lines = {}
-                State.current_fight_hinder_lines = {}
-
+                -- Reveal helpers and hinderes!
                 if #State.unit_statuses[unit].helped_by > 0 then
                     add_action(function()
 
@@ -279,9 +279,9 @@ function phase_action.handle_fights()
                 end
 
 
-                
-
-
+                -- Figure out who won the fight
+                local target_status = get_unit_status(target)
+                local unit_status = get_unit_status(unit)
 
                 ---@type unit | "tie"
                 local fight_winner
@@ -299,6 +299,9 @@ function phase_action.handle_fights()
                 -- In other words, if the attack range of the winner is lower than the distance between fighters, no casualties should occur
                 
                 if fight_winner ~= "tie" then
+
+                    if State.player_who_scored_first_casualty == nil then State.player_who_scored_first_casualty = fight_winner.controller end
+
                     local in_range = Hexlib.axial_distance(unit.occupiedTileCoords, target.occupiedTileCoords) <= fight_winner.attack_range
                     
                     if fight_winner == unit and in_range then

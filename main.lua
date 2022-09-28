@@ -7,6 +7,9 @@ require("definitions.unit")
 require("definitions.action")
 
 
+-- Global Config
+MAP_SIZE = 8
+
 
 
 local Hexlib = require("lib.hexlib")
@@ -24,6 +27,8 @@ MAPATTRIBUTES = {
 CAMERA = {
     offsetX = 100,
     offsetY = 100,
+
+    zoomScale = 1,
 
     oldX = -1,
     oldY = -1
@@ -53,14 +58,6 @@ tactics = {
 STATE = {
     currentPhase = game_phases.MOVEMENT,
 
-    armies = {},
-
-    -- Phases
-    --MOVEMENT = PHASES[game_phases.MOVEMENT].state,
-
-    ACTION = {
-
-    }
 }
 
 
@@ -96,7 +93,10 @@ Gui_manager.register_gui("tactics", require("ui.ui_tactics") )
 
 
 love.mouse.custom_getXYWithOffset = function()
-    return {x=love.mouse.getX() - CAMERA.offsetX, y=love.mouse.getY() - CAMERA.offsetY}
+    return {
+        x=(love.mouse.getX() - CAMERA.offsetX)/CAMERA.zoomScale,
+        y=(love.mouse.getY() - CAMERA.offsetY)/CAMERA.zoomScale
+    }
 end
 
 
@@ -110,6 +110,10 @@ function changePhase(newPhase)
 
     if newPhase == game_phases.MOVEMENT then
         
+        if PHASES[game_phases.ACTION].state.player_who_scored_first_casualty ~= nil then
+            STATE.player_with_tactical_advantage = PHASES[game_phases.ACTION].state.player_who_scored_first_casualty
+        end
+        
         -- Refresh all units
         for _, player in ipairs(PLAYERS) do
 
@@ -118,7 +122,7 @@ function changePhase(newPhase)
             end
 
         end
-
+        
         PHASES[game_phases.MOVEMENT].refresh()
 
         Gui_manager.set_gui("movement")
@@ -160,6 +164,8 @@ function changePhase(newPhase)
 
         STATE.currentPhase = game_phases.ACTION
 
+
+
         --changePhase(game_phases.MOVEMENT)
 
         --STATE.currentPhase = game_phases.ACTION
@@ -185,18 +191,23 @@ end
 
 local function populateRandomUnits()
 
+    local num_units = love.math.random(1, 6)
+
     for _, player in ipairs(PLAYERS) do
         local unitCounter = 1
 
-        for _ = 0, love.math.random(1, 6), 1 do
-            local randomCoords = HL_coords.axial:New(love.math.random(4), love.math.random(4))
+        for _ = 0, num_units, 1 do
+            local randomCoords = HL_coords.axial:New(love.math.random(MAP_SIZE), love.math.random(MAP_SIZE))
 
-            if Hexfield.tiles[tostring(randomCoords)].occupant == nil then
-                local newUnit = Units:New(player, random_unit_type(), randomCoords, unitCounter)
-                table.insert(player.units, newUnit)
-                Hexfield.tiles[tostring(randomCoords)].occupant = newUnit
-                unitCounter = unitCounter+1
+            while Hexfield.tiles[tostring(randomCoords)].occupant ~= nil do
+                randomCoords = HL_coords.axial:New(love.math.random(MAP_SIZE), love.math.random(MAP_SIZE))
             end
+            
+            local newUnit = Units:New(player, random_unit_type(), randomCoords, unitCounter)
+            table.insert(player.units, newUnit)
+            Hexfield.tiles[tostring(randomCoords)].occupant = newUnit
+            unitCounter = unitCounter+1
+            
         end
 
     end
@@ -209,7 +220,6 @@ function love.load()
 
     -- Populate random units
     populateRandomUnits()
-
     changePhase(game_phases.MOVEMENT)
 
 end
@@ -251,9 +261,9 @@ end
 function love.draw()
     -- Transition to world space
     love.graphics.translate(CAMERA.offsetX, CAMERA.offsetY)
+    love.graphics.scale(CAMERA.zoomScale, CAMERA.zoomScale)
 
     Hexfield.draw()
-
 
     -- Draw highlighter ring if mouse is in hex
     local cellCoords = HL_convert.worldToAxial(love.mouse.custom_getXYWithOffset())
@@ -275,6 +285,7 @@ function love.draw()
     PHASES[STATE.currentPhase].draw()
 
     -- Exit to screen space
+    love.graphics.scale(1/CAMERA.zoomScale, 1/CAMERA.zoomScale)
     love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
 
     -- Draw Gui
@@ -344,10 +355,11 @@ love.mousereleased = function(x, y, button)
         CAMERA.oldX = -1
         CAMERA.oldY = -1
     end
-    
+
 end
 love.wheelmoved = function(x, y)
     Gui_manager.wheelmoved(x, y)
 
+    CAMERA.zoomScale = CAMERA.zoomScale + y/10
     
 end

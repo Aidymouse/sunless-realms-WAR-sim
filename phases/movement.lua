@@ -12,7 +12,9 @@ local phase_movement = {
 
         playersWhoHaveMoved = {},
         actingPlayerIndex = 1,
-        actingPlayer = PLAYERS[1]
+        actingPlayer = PLAYERS[1],
+
+        player_deciding_to_go_first = nil
 
     }
 
@@ -31,6 +33,7 @@ function phase_movement.refresh()
     State.actingPlayerIndex = 1 -- TODO: Find this based on tactical advantage
     State.actingPlayer = PLAYERS[State.actingPlayerIndex]
 
+    State.player_deciding_to_go_first = STATE.player_with_tactical_advantage
 end
 
 

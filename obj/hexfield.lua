@@ -101,8 +101,8 @@ end
 
 local function populate()
 
-    for q=0, 8, 1 do
-        for r=0, 8, 1 do
+    for q=0, MAP_SIZE, 1 do
+        for r=0, MAP_SIZE, 1 do
 
             local newCoords = HL_coords.axial:New(q, r)
 

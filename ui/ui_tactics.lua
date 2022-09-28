@@ -34,7 +34,7 @@ button_help.click = function() phase_tactics.state.currentlyDeciding = TACTICS.H
 local button_hinder = gui_tactics:button("Hinder", { w = BUTTONWIDTH, h = BUTTONHEIGHT })
 button_hinder.click = function() phase_tactics.state.currentlyDeciding = TACTICS.HINDER end
 
-local button_done = gui_tactics:button("Done", { w = BUTTONWIDTH, h = BUTTONHEIGHT })
+local button_done = gui_tactics:button("Done Deciding", { w = BUTTONWIDTH, h = BUTTONHEIGHT })
 button_done.click = function()
 
     phase_tactics.state.currentlyDeciding = nil
