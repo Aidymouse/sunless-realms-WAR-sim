@@ -7,8 +7,13 @@ local Utils = require("lib.utils")
 ---@field delay number Delay until next action
 ---@field process function Any code to run
 
-local time_slower = 1
+local time_multiplier = 1
 local DELAY = 0.8
+
+local MESSAGE_TIME_FAST = 0.8
+local MESSAGE_TIME = 1.6
+
+local MESSAGE_OFFSET_HEIGHT = 40
 
 local phase_action = {
 
@@ -20,7 +25,12 @@ local phase_action = {
 
         delay_timer = 0,
 
-        messages = {}
+        messages = {},
+
+        current_fight_helper_lines = {},
+        current_fight_hinder_lines = {},
+        target_helper_lines = {},
+        target_hinder_lines = {},
     },
     
 
@@ -45,12 +55,12 @@ function phase_action.populate_statuses()
     end
 end
 
-local function new_message(message_text, xy)
+local function new_message(message_text, x, y)
     local message = {
         text = message_text,
-        x = xy.x,
-        y = xy.y,
-        life_timer = 0.8,
+        x = x,
+        y = y,
+        life_timer = MESSAGE_TIME,
     }
     table.insert(State.messages, message)
 end
@@ -60,6 +70,14 @@ local function get_unit_status(unit)
     elseif #State.unit_statuses[unit].hindered_by > #State.unit_statuses[unit].helped_by then return UNIT_STATUSES.HINDERED --hindered
     end
     return UNIT_STATUSES.NORMAL -- normal
+end
+
+local function add_action(process, delay, description)
+    table.insert(State.action_queue, {
+        description = description or "",
+        delay = delay,
+        process = process
+    })
 end
 
 function phase_action.calculate_helpers_and_hinderers()
@@ -100,6 +118,14 @@ local function calculate_fight(unit1, unit2)
     local unit1roll = love.math.random(1, 20)
     local unit2roll = love.math.random(1, 20)
 
+    add_action(function()
+        local unit1coords = HL_convert.axialToWorld(unit1.occupiedTileCoords, MAPATTRIBUTES)
+        local unit2coords = HL_convert.axialToWorld(unit2.occupiedTileCoords, MAPATTRIBUTES)
+
+        new_message(unit1roll, unit1coords.x, unit1coords.y - MESSAGE_OFFSET_HEIGHT)
+        new_message(unit2roll, unit2coords.x, unit2coords.y - MESSAGE_OFFSET_HEIGHT)
+    end, DELAY, "Fight Rolls")
+
     print("[FIGHT] "..tostring(unit1).." {"..unit1roll.."} vs "..tostring(unit2).." {"..unit2roll.."}")
 
     if unit1roll <= unit1.attack_value and unit2roll > unit2.attack_value then
@@ -138,9 +164,12 @@ local function cleanup_dead_units()
 
 end
 
+function phase_action.mousepressed(x, y, button)
+    time_multiplier = 5
+end
+
 function phase_action.handle_fights()
     for _, player in ipairs(PLAYERS) do
-
         for _, unit in ipairs(player.units) do
 
             if unit.tactics.target ~= nil and unit.tactics.chosen_tactic == TACTICS.FIGHT then
@@ -154,36 +183,117 @@ function phase_action.handle_fights()
                 end
                 
                 -- Add fight messages
-                local unit_bottom_center_XY = HL_convert.axialToWorld(unit.occupiedTileCoords, MAPATTRIBUTES)
-                local target_bottom_center_XY = HL_convert.axialToWorld(target.occupiedTileCoords, MAPATTRIBUTES)
+                local unit_coords = HL_convert.axialToWorld(unit.occupiedTileCoords, MAPATTRIBUTES)
+                local target_coords = HL_convert.axialToWorld(target.occupiedTileCoords, MAPATTRIBUTES)
 
-                ---@type action
-                local new_action = {
-                    description="Fight message",
-                    delay=DELAY,
-                    process=function() 
-                        new_message("FIGHT", unit_bottom_center_XY)
-                        new_message("FIGHT", target_bottom_center_XY)
-                    end
-                }
+                add_action(function()
 
-                table.insert(State.action_queue, new_action)
+                        State.current_fight_helper_lines = {}
+                        State.current_fight_hinder_lines = {}
 
+                        new_message("FIGHT", unit_coords.x, unit_coords.y-MESSAGE_OFFSET_HEIGHT)
+                        new_message("FIGHT", target_coords.x, target_coords.y-MESSAGE_OFFSET_HEIGHT)
+                end, DELAY, "Fight Message")
 
-                
-
-                
 
                 local target_status = get_unit_status(target)
                 local unit_status = get_unit_status(unit)
 
-                --print(tostring(unit)..": "..unit_status.." -> "..tostring(target)..": "..target_status)
+                State.current_fight_helper_lines = {}
+                State.current_fight_hinder_lines = {}
 
+                if #State.unit_statuses[unit].helped_by > 0 then
+                    add_action(function()
+
+                        for _, helper in pairs(State.unit_statuses[unit].helped_by) do
+                            
+                            local helper_coords = HL_convert.axialToWorld(helper.occupiedTileCoords, MAPATTRIBUTES)
+
+                            table.insert(State.current_fight_helper_lines, {
+                                unit_coords.x, unit_coords.y,
+                                helper_coords.x, helper_coords.y
+                            })
+
+                            new_message("Helping!", helper_coords.x, helper_coords.y-MESSAGE_OFFSET_HEIGHT)
+
+                        end
+
+                    end, DELAY, "Reveal Helpers")
+                end
+
+                if #State.unit_statuses[unit].hindered_by > 0 then
+                    add_action(function()
+
+                        for _, hinderer in pairs(State.unit_statuses[unit].hindered_by) do
+
+                            local hinderer_coords = HL_convert.axialToWorld(hinderer.occupiedTileCoords, MAPATTRIBUTES)
+
+                            table.insert(State.current_fight_hinder_lines, {
+                                unit_coords.x, unit_coords.y,
+                                hinderer_coords.x, hinderer_coords.y
+                            })
+
+                            new_message("Hindering!", hinderer_coords.x, hinderer_coords.y - MESSAGE_OFFSET_HEIGHT)
+
+                        end
+
+                    end, DELAY, "Reveal Hinderers")
+                end
+
+                if #State.unit_statuses[target].helped_by > 0 then
+                    add_action(function()
+
+                        for _, helper in pairs(State.unit_statuses[target].helped_by) do
+
+                            local helper_coords = HL_convert.axialToWorld(helper.occupiedTileCoords, MAPATTRIBUTES)
+
+                            table.insert(State.target_helper_lines, {
+                                target_coords.x, target_coords.y,
+                                helper_coords.x, helper_coords.y
+                            })
+
+                            new_message("Helping!", helper_coords.x, helper_coords.y - MESSAGE_OFFSET_HEIGHT)
+
+                        end
+
+                    end, DELAY, "Reveal Target Helpers")
+                end
+
+                if #State.unit_statuses[target].hindered_by > 0 then
+                    add_action(function()
+
+                        for _, hinderer in pairs(State.unit_statuses[target].hindered_by) do
+
+                            local hinderer_coords = HL_convert.axialToWorld(hinderer.occupiedTileCoords, MAPATTRIBUTES)
+
+                            table.insert(State.target_hinder_lines, {
+                                target_coords.x, target_coords.y,
+                                hinderer_coords.x, hinderer_coords.y
+                            })
+
+                            new_message("Hindering!", hinderer_coords.x, hinderer_coords.y - MESSAGE_OFFSET_HEIGHT)
+
+                        end
+
+                    end, DELAY, "Reveal Target Hinderers")
+                end
+
+
+                
+
+
+
+                ---@type unit | "tie"
                 local fight_winner
+                if target_status > unit_status then
+                    fight_winner = target
 
-                if target_status > unit_status then fight_winner = target
-                elseif target_status < unit_status then fight_winner = unit
-                else fight_winner = calculate_fight(unit, target) end
+                elseif target_status < unit_status then
+                    fight_winner = unit
+
+                else
+                    fight_winner = calculate_fight(unit, target)
+                end
 
                 -- You can't inflict casualties if you're not within attack range of the target
                 -- In other words, if the attack range of the winner is lower than the distance between fighters, no casualties should occur
@@ -193,61 +303,44 @@ function phase_action.handle_fights()
                     
                     if fight_winner == unit and in_range then
 
-                        table.insert(State.action_queue, {
-                            description="Decrement Target Size",
-                            delay=DELAY,
-                            process=function()
+                        add_action(function()
                                 target.size = target.size - 1
-                                new_message(-1, HL_convert.axialToWorld(target.occupiedTileCoords, MAPATTRIBUTES))
-                            end
-                        })
+                                new_message(-1, target_coords.x, target_coords.y-MESSAGE_OFFSET_HEIGHT)
+                        end, DELAY, "Decrement Target Size")
                         
                         --print("Winner: "..tostring(unit).."\n")
 
                     elseif in_range then
-                        table.insert(State.action_queue, {
-                            description="Decrement Unit Size",
-                            delay = DELAY,
-                            process = function()
+                        
+                        add_action(function()
                                 unit.size = unit.size - 1
-                                new_message(-1, HL_convert.axialToWorld(unit.occupiedTileCoords, MAPATTRIBUTES))
-                            end
-                        })
+                                new_message(-1, unit_coords.x, unit_coords.y)
+                        end, DELAY, "Decrement Unit Size")
 
                         --print("Winner: "..tostring(target).."\n")
 
                     else
-                        print("Winner: "..tostring(fight_winner).." but out of range!\n")
+                        --print("Winner: "..tostring(fight_winner).." but out of range!\n")
+                        local winner_coords = HL_convert.axialToWorld(fight_winner.occupiedTileCoords, MAPATTRIBUTES)
 
-                        table.insert(State.action_queue, {
-                            description = "Out of range message",
-                            delay = DELAY,
-                            process = function()
-                                new_message("Out of range!", HL_convert.axialToWorld(fight_winner.occupiedTileCoords, MAPATTRIBUTES))
-                            end
-                        })
+
+                        add_action(function()
+                                new_message("Out of range!", winner_coords.x, winner_coords.y-MESSAGE_OFFSET_HEIGHT)
+                        end, DELAY, "Out of range message")
+
 
 
                     end
                 
                 else
-                    table.insert(State.action_queue, {
-                        description = "Tie message",
-                        delay = DELAY,
-                        process = function()
-                            new_message("Tie!",
-                                HL_convert.axialToWorld(unit.occupiedTileCoords, MAPATTRIBUTES))
-                            new_message("Tie!",
-                                HL_convert.axialToWorld(target.occupiedTileCoords, MAPATTRIBUTES))
-                        end
-                    })
+
+                    add_action(function()
+                            new_message("Tie!", unit_coords.x, unit_coords.y-MESSAGE_OFFSET_HEIGHT)
+                            new_message("Tie!", target_coords.x, target_coords.y-MESSAGE_OFFSET_HEIGHT)
+                    end, DELAY, "Tie Message")
 
 
-                    print("Tie!\n")
                 end
-
-                
-
 
                 unit.action.has_fought = true
 
@@ -270,7 +363,7 @@ end
 
 function phase_action.update(dt)
 
-    dt = dt * time_slower
+    dt = dt * time_multiplier
 
     State.delay_timer = State.delay_timer - dt
 
@@ -307,6 +400,25 @@ function phase_action.draw()
     for _, message in ipairs(State.messages) do
         love.graphics.print(message.text, message.x, message.y - (0.8-message.life_timer)*30)
     end
+
+    love.graphics.setColor(0, 1, 0)
+    for _, line in ipairs(State.current_fight_helper_lines) do
+        love.graphics.line(line)
+    end
+    for _, line in ipairs(State.target_helper_lines) do
+        love.graphics.line(line)
+    end
+
+
+    love.graphics.setColor(0, 0, 1)
+    for _, line in ipairs(State.current_fight_hinder_lines) do
+        love.graphics.line(line)
+    end
+    for _, line in ipairs(State.target_hinder_lines) do
+        love.graphics.line(line)
+    end
+
+
 
     love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
     
