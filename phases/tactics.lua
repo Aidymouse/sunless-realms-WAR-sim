@@ -4,7 +4,7 @@ local HL_convert = Hexlib.coordConversions
 
 local Hexfield = require("obj.hexfield")
 
-
+local Camera = require("lib.camera")
 
 local phase_tactics = {
     state = {
@@ -130,9 +130,9 @@ function phase_tactics.draw()
     end
 
 
-    love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.print("Acting: " .. PLAYERS[State.actingPlayerIndex].name, 0, 16)
+    Camera.to_screen_space()
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print("Acting: " .. PLAYERS[State.actingPlayerIndex].name, 0, 16)
         local tactic = "None"
         if State.currentlyDeciding ~= nil then tactic = State.currentlyDeciding end
         love.graphics.print("Deciding: " .. tactic, 0, 48)
@@ -140,9 +140,9 @@ function phase_tactics.draw()
         local unit = "None"
         if State.selected_unit ~= nil then unit = tostring(State.selected_unit) end
         love.graphics.print("Deciding for unit: " .. tostring(unit), 0, 64)
-
-
-    love.graphics.translate(CAMERA.offsetX, CAMERA.offsetY)
+        
+        
+    Camera.to_world_space()
 
 
 end

@@ -21,22 +21,15 @@ local HL_convert = Hexlib.coordConversions
 
 local Utils = require("lib.utils")
 
+local Camera = require("lib.camera")
+CAMERA = Camera
+
 -- Global State Stuff, probs a bad idea
 ---@alias map_attributes {hexWidth: number, hexHeight: number, orientation: hex_orientation}
 MAPATTRIBUTES = {
     hexWidth = 100,
     hexHeight = 60,
     orientation = "flattop"
-}
-
-CAMERA = {
-    offsetX = 100,
-    offsetY = 100,
-
-    zoomScale = 1,
-
-    oldX = -1,
-    oldY = -1
 }
 
 
@@ -103,8 +96,8 @@ Gui_manager.register_gui("tactics", require("ui.ui_tactics") )
 
 love.mouse.custom_getXYWithOffset = function()
     return {
-        x=(love.mouse.getX() - CAMERA.offsetX)/CAMERA.zoomScale,
-        y=(love.mouse.getY() - CAMERA.offsetY)/CAMERA.zoomScale
+        x=(love.mouse.getX() - Camera.offsetX)/Camera.zoom_scale,
+        y=(love.mouse.getY() - Camera.offsetY)/Camera.zoom_scale
     }
 end
 
@@ -252,7 +245,6 @@ end
 
 function love.update(dt)
 
-
     Hexfield.update(dt)
     PHASES[STATE.currentPhase].update(dt)
 
@@ -266,19 +258,19 @@ function love.update(dt)
     -- STATE
     Gui_manager.update(dt)
 
-    -- CAMERA
-    if CAMERA.oldX ~= -1 then
+    -- Camera
+    if Camera.oldX ~= -1 then
         local newX = love.mouse.getX()
         local newY = love.mouse.getY()
 
-        local deltaX = newX - CAMERA.oldX
-        local deltaY = newY - CAMERA.oldY
+        local deltaX = newX - Camera.oldX
+        local deltaY = newY - Camera.oldY
 
-        CAMERA.offsetX = CAMERA.offsetX + deltaX
-        CAMERA.offsetY = CAMERA.offsetY + deltaY
+        Camera.offsetX = Camera.offsetX + deltaX
+        Camera.offsetY = Camera.offsetY + deltaY
 
-        CAMERA.oldX = newX
-        CAMERA.oldY = newY
+        Camera.oldX = newX
+        Camera.oldY = newY
     end
 
 
@@ -286,8 +278,7 @@ end
 
 function love.draw()
     -- Transition to world space
-    love.graphics.translate(CAMERA.offsetX, CAMERA.offsetY)
-    love.graphics.scale(CAMERA.zoomScale, CAMERA.zoomScale)
+    Camera.to_world_space()
 
     Hexfield.draw()
 
@@ -311,8 +302,7 @@ function love.draw()
     PHASES[STATE.currentPhase].draw()
 
     -- Exit to screen space
-    love.graphics.scale(1/CAMERA.zoomScale, 1/CAMERA.zoomScale)
-    love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
+    Camera.to_screen_space()
 
     -- Draw Gui
     Gui_manager.draw()
@@ -368,8 +358,8 @@ love.mousepressed = function(x, y, button)
     Gui_manager.mousepressed(x, y, button)
     
     if (button == 2) then
-        CAMERA.oldX = x
-        CAMERA.oldY = y
+        Camera.oldX = x
+        Camera.oldY = y
     end
 
 
@@ -378,14 +368,14 @@ love.mousereleased = function(x, y, button)
     Gui_manager.mousereleased(x, y, button)
 
     if (button == 2) then
-        CAMERA.oldX = -1
-        CAMERA.oldY = -1
+        Camera.oldX = -1
+        Camera.oldY = -1
     end
 
 end
 love.wheelmoved = function(x, y)
     Gui_manager.wheelmoved(x, y)
 
-    CAMERA.zoomScale = CAMERA.zoomScale + y/10
+    Camera.zoom_scale = Camera.zoom_scale + y/10
     
 end

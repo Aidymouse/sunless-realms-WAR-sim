@@ -1,3 +1,5 @@
+local Camera = require("lib.camera")
+
 local phase_roundstart = {
     state = {
         winning_player = nil
@@ -8,7 +10,9 @@ local big_font = love.graphics.setNewFont(48)
 local small_font = love.graphics.setNewFont(12)
 
 function phase_roundstart.update(dt)
-    CAMERA.zoomScale = CAMERA.zoomScale * 0.99
+    if Camera.zoom_scale > 0.5 then
+        Camera.zoom_scale = Camera.zoom_scale - dt
+    end
 end
 
 function phase_roundstart.mousepressed(x, y, button)
@@ -16,7 +20,7 @@ end
 
 function phase_roundstart.draw()
 
-    love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
+    Camera.to_screen_space()
     
     love.graphics.setFont(big_font)
     
@@ -24,7 +28,7 @@ function phase_roundstart.draw()
     
     love.graphics.setFont(small_font)
     
-    love.graphics.translate(CAMERA.offsetX, CAMERA.offsetY)
+    Camera.to_world_space()
 end
 
 return phase_roundstart

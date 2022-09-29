@@ -1,6 +1,7 @@
 local Hexlib = require("lib.hexlib")
 local HL_convert = Hexlib.coordConversions
 local Utils = require("lib.utils")
+local Camera = require("lib.camera")
 
 ---@class action
 ---@field description string
@@ -449,7 +450,7 @@ function phase_action.draw()
 
 
 
-    love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
+    Camera.to_screen_space()
     
         love.graphics.print(tostring(State.delay_timer), 0, love.graphics.getHeight()-48)
 
@@ -465,9 +466,7 @@ function phase_action.draw()
         end
         ]]
 
-
-    love.graphics.translate(CAMERA.offsetX, CAMERA.offsetY)
-
+    Camera.to_world_space()
 
 
 end

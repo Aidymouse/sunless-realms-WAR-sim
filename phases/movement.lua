@@ -5,6 +5,9 @@ local HL_convert = Hexlib.coordConversions
 local HL_coords = Hexlib.coords
 
 local Utils = require("lib.utils")
+local Camera = require("lib.camera")
+
+
 
 local phase_movement = {
     state = {
@@ -54,7 +57,7 @@ local function validateNewTile(tile)
 
     
     if tile == nil then return false end
-    -- Prevent duplicate tiles 
+    -- Prevent the same tile being present twice in a row 
     if tile == State.selectedMovePlan[#State.selectedMovePlan] then return false end
 
     local from_tile = State.selectedMovePlan[#State.selectedMovePlan]
@@ -217,7 +220,7 @@ function phase_movement.draw()
     end
 
 
-    love.graphics.translate(-CAMERA.offsetX, -CAMERA.offsetY)
+    Camera.to_screen_space()
 
     if State.player_deciding_to_go_first ~= nil then
         love.graphics.print("Deciding for "..State.player_deciding_to_go_first.name, 150, 16*2)
@@ -227,7 +230,7 @@ function phase_movement.draw()
         love.graphics.print(tostring(tile.coords), 500, i*16)
     end
 
-    love.graphics.translate(CAMERA.offsetX, CAMERA.offsetY)
+    Camera.to_world_space()
 
 end
 
